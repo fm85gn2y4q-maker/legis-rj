@@ -1,0 +1,64 @@
+{
+  "estrutura": {
+    "total": 162,
+    "amostra": [
+      {
+        "unid": "3096878090ecb2130325654d0076f8ca",
+        "colunas": [
+          "1097",
+          "1986",
+          "Em Vigor",
+          "AUTORIZA O PODER EXECUTIVO A CRIAR UMA COMISSÃO COORDENADORA DE AÃÃES DE SANEAMENTO.",
+          "Rosalda Paim"
+        ]
+      },
+      {
+        "unid": "3f7b0091d779c2e48325815c005e0bec",
+        "colunas": [
+          "7643",
+          "2017",
+          "Em Vigor",
+          "ALTERA A LEI NÂ° 5.645, DE 6 DE JANEIRO DE 2010, PARA INCLUIR, NO CALENDÃRIO OFICIAL DO ESTADO DO RIO DE JANEIRO, O DIA DO TRABALHADOR DO SETOR DE SANEAMENTO AMBIENTAL.ALTERA A LEI NÂ° 5.645, DE 6 DE JANEIRO DE 2010, PARA INCLUIR, NO CALENDÃRIO OFICIAL DO ESTADO DO RIO DE JANEIRO, O DIA DO TRABALHADOR DO SETOR DE SANEAMENTO AMBIENTAL.",
+          "Enfermeira Rejane"
+        ]
+      },
+      {
+        "unid": "a58bbc43bb7f2f0783257c0800665c61",
+        "colunas": [
+          "6560",
+          "2013",
+          "Em Vigor",
+          "CRIA O CONCEITO DE FAIXA \"NON AEDIFICANDI\" AO LONGO DAS TUBULAÃÃES DE ADUÃÃO DE ÃGUA OPERADAS PELAS EMPRESAS DE SANEAMENTO DO ESTADO DO RIO DE JANEIRO.",
+          "Luiz Paulo,Lucinha"
+        ]
+      },
+      {
+        "unid": "3871011ad5e08090832572eb006eec33",
+        "colunas": [
+          "5032",
+          "2007",
+          "Em Vigor",
+          "DISPÃE SOBRE A OBRIGATORIEDADE DO ACOMPANHAMENTO SOCIAL, DA EDUCAÃÃO AMBIENTAL E SANITÃRIA NAS INTERVENÃÃES DE SANEAMENTO, EM ÃREAS URBANAS DO ESTADO NO RIO DE JANEIRO.",
+          "Edson Albertassi"
+        ]
+      }
+    ]
+  },
+  "busca_por_numero": {
+    "443": 84,
+    "11293": 0,
+    "11.293": 1,
+    "0443": 0
+  },
+  "teto": {
+    "dispõe": 1000,
+    "estado": 1000,
+    "lei": 1000
+  },
+  "especies": {
+    "lei complementar": 506,
+    "emenda constitucional": 79,
+    "decreto legislativo": 4,
+    "resolução": 400
+  }
+}

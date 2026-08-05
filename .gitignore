@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+
+# O que veio da rede não entra no Git: é grande, se refaz e vira asset de
+# release com conferência de sha256, como nos acervos anteriores.
+dados/
+*.sqlite
+*.db
+*.mcpb

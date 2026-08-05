@@ -1,0 +1,12 @@
+{
+  "view": "Norma Nº Ano Data Pub Ementa Autoria Decreto Estadual DecretoLei Resolução",
+  "busca:decreto": 1000,
+  "busca:governador": 1000,
+  "busca:estado": 1000,
+  "numero:49.792": 1,
+  "numero:48.313": 0,
+  "numero:45.000": 10,
+  "numero:40.000": 10,
+  "numero:30.000": 10,
+  "numero:10.000": 10
+}

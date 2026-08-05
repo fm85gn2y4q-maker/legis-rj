@@ -1,0 +1,60 @@
+{
+  "lei_ordinaria": {
+    "view": "LeiOrdInt",
+    "linhas_visiveis": 15,
+    "mais_recente": [
+      "11293",
+      "2026",
+      "Em Vigor",
+      "DISPÕE SOBRE A PROIBIÇÃO DA DIFERENCIAÇÃO DE PREÇOS DE PRODUTOS E SERVIÇOS BASEADA NO GÊNERO DO CONSUMIDOR, PRÁTICA CONHECIDA COMO “PINK TAX” OU “TAXA ROSA”, NO ÂMBITO DO ESTADO DO RIO DE JANEIRO, E DÁ OUTRAS PROVIDÊNCIAS.",
+      "Dionisio Lins,Tia Ju,Marcelo Dino"
+    ]
+  },
+  "lei_complementar": {
+    "view": "LeiCompInt",
+    "linhas_visiveis": 15,
+    "mais_recente": [
+      "232",
+      "2026",
+      "Em Vigor",
+      "ALTERA A LEI COMPLEMENTAR N.º 219, DE 06 DE JUNHO DE 2024, PARA APERFEIÇOAR OS PROCEDIMENTOS DE EXECUÇÃO, TRANSPARÊNCIA, MONITORAMENTO E PRESTAÇÃO DE CONTAS DAS PROGRAMAÇÕES DECORRENTES DE EMENDAS INDIVIDUAIS IMPOSITIVAS AO PROJETO DE LEI ORÇAMENTÁRIA ANUAL, EM CUMPRIMENTO AO DISPOSTO NO § 9º DO ART. 210 DA CONSTITUIÇÃO DO ESTADO DO RIO DE JANEIRO.",
+      "Gustavo Tutuca"
+    ]
+  },
+  "emenda_constitucional": {
+    "view": "EmendaInt",
+    "linhas_visiveis": 15,
+    "mais_recente": [
+      "99",
+      "2025",
+      "Em Vigor",
+      "MODIFICA OS ARTIGOS 183 E 263 DA CONSTITUIÇÃO DO ESTADO DO RIO DE JANEIRO.",
+      "Luiz Paulo,Lucinha,Rodrigo Amorim,Tia Ju,Jari Oliveira,Carlos Minc,Chico Machado,Celia Jordão,Filipe Soares,Val Ceasa,Samuel Malafaia,Sergio Fernandes,Marcelo Dino,Dionisio Lins,Brazão,Flavio Serafini,Renata Souza,Dani Monteiro,Giovani Ratinho,Dr. Deodalto"
+    ]
+  },
+  "decreto_legislativo": {
+    "view": "DecretoInt",
+    "linhas_visiveis": 15,
+    "mais_recente": [
+      "03",
+      "2025",
+      "COMISSÃO DE ORÇAMENTO FINANÇAS FISCALIZAÇÃO FINANCEIRA E CONTROLE",
+      "APROVA AS CONTAS DE GOVERNO DO EXMO SR. GOVERNADOR DO ESTADO DO RIO DE JANEIRO, CLÁUDIO BOMFIM DE CASTRO E SILVA, REFERENTES AO EXERCÍCIO FINANCEIRO DE 2023."
+    ]
+  },
+  "resolucao": {
+    "view": "ResolucaoInt",
+    "linhas_visiveis": 15,
+    "mais_recente": [
+      "2375",
+      "2026",
+      "Felipinho Ravis",
+      "CONCEDE O DIPLOMA RUSSELL PHILIP SHEDD À PASTORA ANISIA S. CARDOSO DIAS COUTINHO."
+    ]
+  },
+  "geral": {
+    "view": "GeralInt",
+    "linhas_visiveis": 0,
+    "mais_recente": []
+  }
+}
