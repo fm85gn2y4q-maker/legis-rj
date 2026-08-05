@@ -1,0 +1,48 @@
+{
+  "teto": {
+    "decreto": 100,
+    "estado": 100,
+    "secretaria": 100
+  },
+  "por_dia": {
+    "10/01/2023": {
+      "materias": 51,
+      "decreto_normativo": 10,
+      "decreto_pessoal": 3,
+      "paginas_distintas": [
+        "1",
+        "11",
+        "2",
+        "3",
+        "4",
+        "6",
+        "8",
+        "9"
+      ]
+    },
+    "15/03/2016": {
+      "materias": 28,
+      "decreto_normativo": 1,
+      "decreto_pessoal": 2,
+      "paginas_distintas": [
+        "1"
+      ]
+    },
+    "07/05/2010": {
+      "materias": 59,
+      "decreto_normativo": 4,
+      "decreto_pessoal": 1,
+      "paginas_distintas": [
+        "1",
+        "2"
+      ]
+    }
+  },
+  "calendario": {
+    "link": true,
+    "status": 200,
+    "chars": 1775591,
+    "sessoes_oferecidas": 4454,
+    "datas_visiveis": []
+  }
+}

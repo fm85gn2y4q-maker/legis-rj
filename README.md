@@ -32,18 +32,32 @@ O que a medição já mudou no plano:
   com dois parágrafos declarados inconstitucionais pelo Órgão Especial.
 - **Datas em MM/DD/AAAA.** Locale do Domino. Ler como brasileiro inverte todo
   dia menor ou igual a 12, sem erro visível.
+- **O buraco dos decretos tem saída pelo Diário Oficial.** O DOERJ publica um
+  calendário que entrega, numa página só, **4.454 edições** com o identificador
+  de cada uma, e o PDF tem **texto nativo** (13,5 mil caracteres por página) —
+  sem OCR. São ~21 GB de PDF para ~1,6 GB de texto. A busca do site não serve
+  para enumerar (teto de 100 resultados, sem paginação); o calendário serve.
+- **Mas o Diário não anota vigência.** A base da ALERJ traz "Revogado pela Lei
+  nº 5919/2011" no dispositivo; o DOERJ publica e segue. Decreto vindo do
+  Diário chega na redação do dia em que saiu. Reconstruir revogação a partir
+  dos decretos posteriores é inferência nossa, não declaração da fonte — e a
+  resposta do servidor tem de dizer isso.
 
 ## Estrutura
 
 ```
 coleta/
-  alerj.py             cliente HTTP da contlei.nsf (busca, documento, view)
-  sondar.py            fase 1: estrutura do resultado, formato de número, teto
-  sondar_documento.py  fase 1: metadados e anotações do ato
-  sondar_decest.py     fase 1: a base de decretos do Executivo
-  inventario.py        fase 1: topo de cada série normativa
-medicoes/              o que cada sondagem mediu, em JSON
-dados/bruto/           HTML como veio da rede, intocado (fora do Git)
+  alerj.py                    cliente da contlei.nsf (busca, documento, view)
+  ioerj.py                    cliente do DOERJ: busca, calendário e PDF da edição
+  sondar.py                   fase 1: estrutura do resultado, formato de número, teto
+  sondar_documento.py         fase 1: metadados e anotações do ato
+  sondar_decest.py            fase 1: a base de decretos do Executivo
+  sondar_decest_cobertura.py  fase 1: até onde a série de decretos vai
+  sondar_doerj.py             fase 1: caminho até o PDF e qualidade do texto
+  sondar_doerj_varredura.py   fase 1: teto da busca, decretos por dia, calendário
+  inventario.py               fase 1: topo de cada série normativa
+medicoes/                     o que cada sondagem mediu, em JSON
+dados/bruto/                  o que veio da rede, intocado (fora do Git)
 ```
 
 ## Rodar
@@ -59,11 +73,8 @@ que se contradizem, e instalar nele quebra os servidores MCP já publicados.
 
 ## Próximo passo
 
-Há uma decisão de escopo antes de qualquer coleta, e ela é sua: **o acervo sai
-com o que a ALERJ mantém — leis, leis complementares, emendas, decretos
-legislativos e resoluções — ou espera uma fonte para os decretos do Executivo
-de 2010 em diante?** As duas são defensáveis; o que não é defensável é publicar
-decreto com a base que parou em 2009.
+Duas medidas fecham a Fase 1 do lado do Diário: **republicação** (o DOERJ
+republica ato com incorreção, e a busca devolve a versão errada com a mesma
+confiança) e **integridade do calendário** em 2010. Depois disso, coletar.
 
-Depois disso, as demais perguntas em aberto estão na seção 6 de
-[FONTES.md](FONTES.md).
+As demais perguntas em aberto estão na seção 7 de [FONTES.md](FONTES.md).

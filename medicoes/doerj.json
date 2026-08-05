@@ -1,0 +1,154 @@
+{
+  "por_numero": {
+    "42.500": {
+      "total_anunciado": "",
+      "listadas": 22,
+      "do_tipo_decreto": 3,
+      "amostra": [
+        {
+          "id": "2717733",
+          "data": "04/03/2026",
+          "pagina": "13",
+          "tipo": "I - Resolução"
+        },
+        {
+          "id": "2562673",
+          "data": "30/04/2024",
+          "pagina": "23",
+          "tipo": "I - Ato"
+        },
+        {
+          "id": "2509575",
+          "data": "18/09/2023",
+          "pagina": "41",
+          "tipo": "I - Extrato de Instrumento Contratual"
+        }
+      ]
+    },
+    "44.000": {
+      "total_anunciado": "",
+      "listadas": 100,
+      "do_tipo_decreto": 0,
+      "amostra": [
+        {
+          "id": "2532652",
+          "data": "14/12/2023",
+          "pagina": "40",
+          "tipo": "I - Despacho"
+        },
+        {
+          "id": "2520991",
+          "data": "31/10/2023",
+          "pagina": "29",
+          "tipo": "I - Despacho"
+        },
+        {
+          "id": "2520324",
+          "data": "27/10/2023",
+          "pagina": "49",
+          "tipo": "I - Despacho"
+        }
+      ]
+    },
+    "46.000": {
+      "total_anunciado": "",
+      "listadas": 73,
+      "do_tipo_decreto": 2,
+      "amostra": [
+        {
+          "id": "2638232",
+          "data": "03/04/2025",
+          "pagina": "20",
+          "tipo": "I - Despacho"
+        },
+        {
+          "id": "2545724",
+          "data": "19/02/2024",
+          "pagina": "24",
+          "tipo": "I - Deliberação"
+        },
+        {
+          "id": "2535097",
+          "data": "22/12/2023",
+          "pagina": "26",
+          "tipo": "I - Deliberação"
+        }
+      ]
+    },
+    "48.313": {
+      "total_anunciado": "",
+      "listadas": 19,
+      "do_tipo_decreto": 6,
+      "amostra": [
+        {
+          "id": "2627237",
+          "data": "13/02/2025",
+          "pagina": "2",
+          "tipo": "I - Despacho"
+        },
+        {
+          "id": "2488370",
+          "data": "26/06/2023",
+          "pagina": "2",
+          "tipo": "I - Decreto Normativo"
+        },
+        {
+          "id": "2488376",
+          "data": "26/06/2023",
+          "pagina": "2",
+          "tipo": "I - Ato Pessoal"
+        }
+      ]
+    },
+    "49.792": {
+      "total_anunciado": "",
+      "listadas": 61,
+      "do_tipo_decreto": 5,
+      "amostra": [
+        {
+          "id": "2753120",
+          "data": "03/08/2026",
+          "pagina": "53",
+          "tipo": "I - Resolução"
+        },
+        {
+          "id": "2751764",
+          "data": "28/07/2026",
+          "pagina": "42",
+          "tipo": "I - Extrato de Termo"
+        },
+        {
+          "id": "2749853",
+          "data": "17/07/2026",
+          "pagina": "39",
+          "tipo": "I - Extrato de Termo"
+        }
+      ]
+    }
+  },
+  "um_dia": {
+    "total_anunciado": "",
+    "listadas": 51,
+    "tipos": [
+      "I - Ato",
+      "I - Ato Pessoal",
+      "I - Decreto Normativo",
+      "I - Decreto Pessoal",
+      "I - Despacho",
+      "I - Edital",
+      "I - Extrato de Instrumento Contratual",
+      "I - Extrato de Termo",
+      "I - Portaria",
+      "I - Resolução"
+    ]
+  },
+  "pdf": {
+    "bytes": 4714965,
+    "e_pdf": true,
+    "arquivo": "doerj_10012023_p1.pdf",
+    "chars": 365281,
+    "paginas": 27,
+    "chars_por_pagina": 13529,
+    "tem_decreto": 129
+  }
+}

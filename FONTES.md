@@ -218,23 +218,113 @@ Um documento grande (Lei 443/1981, o Estatuto dos Policiais Militares) tem
 | Fonte | Por que não |
 |---|---|
 | **SILEP** (`silep.rj.gov.br`) | Só matéria de **pessoal**, e só de julho de 2017 em diante. Além disso o certificado do host não confere com o domínio. Serve como conferência pontual, não como acervo. |
-| **DOERJ / IOERJ** | É a fonte **autoritativa** do que foi publicado, mas é PDF de edição diária, sem consulta por norma, e a varredura é dia a dia. É o lugar certo para conferir uma republicação ou um decreto recentíssimo — não para montar a base. |
+| **DOERJ / IOERJ** | **Medido em 05/08/2026 — é por onde os decretos de 2010 em diante podem entrar.** Ver a seção 7. |
 | **leisestaduais.com.br, LegisWeb, JusBrasil** | Bases privadas, sem garantia de proveniência nem de atualização, e o texto delas não se confere contra o original. Não entram. |
 | **Portais setoriais** (CGE, SEI-RJ, Fazenda) | Recortes por assunto, em PDF avulso. Úteis para preencher buraco, não para servir de espinha dorsal. |
 
 ---
 
-## 6. O que ainda não foi medido
+## 6. O DOERJ, medido: a varredura é viável
+
+Pergunta que a medição da ALERJ deixou aberta: onde estão os decretos de 2010 a
+2026. Resposta: no Diário
+Oficial, e dá para tirá-los de lá. Medido em 05/08/2026.
+
+### O caminho, que tem quatro saltos e uma pegadinha
+
+```
+busca (POST)  →  view_publicacao.php  →  mostra_edicao.php?session=…
+              →  mostra_edicao.php?k=<identificador>  →  PDF da edição
+```
+
+O `session` é o identificador da edição em **base64 três vezes**:
+
+```
+VGpCRk1sRXd… → TjBFMlEwSTNP… → N0E2Q0I3OUMt… → 7A6CB79C-0463-4600-A2AA-E38A65D4B20B
+```
+
+E a pegadinha, que custou a tarde: **o identificador impresso na página não é o
+que baixa o PDF**. O visualizador insere um `P` na posição 12 antes de pedir:
+
+```
+página:  7A6CB79C-0463 -4600-A2AA-E38A65D4B20B
+pedido:  7A6CB79C-046P3-4600-A2AA-E38A65D4B20B
+```
+
+Pedir com o identificador da página devolve **200, `text/html` e zero byte** —
+sem erro, sem mensagem. Parece edição indisponível, e não é. Conferido em duas
+edições: mesma posição, mesma letra.
+
+O que **não** existe: texto por matéria. O link "Ver Texto" de cada resultado
+dá 404 no próprio site. Só há o PDF da edição inteira e o número da página.
+
+### A busca tem teto de 100, e não paginar de novo
+
+`decreto`, `estado` e `secretaria`, sem data, devolveram **exatamente 100**
+cada. É teto, e não há paginação — a busca serve para achar, não para enumerar.
+
+### O calendário é que enumera
+
+O visualizador tem um link de calendário que devolve, **numa página só**,
+`4.454` edições com o `session` de cada uma — cerca de 223 meses, de 2008/2009
+a 2026. Como o `session` decodifica para o identificador da edição, essa página
+basta: dela saem todos os PDFs, sem depender do índice de texto do site nem do
+teto de 100.
+
+### O texto é nativo — não precisa de OCR
+
+Edição de 10/01/2023, Parte I:
+
+```
+4.714.965 bytes   27 páginas   365.281 caracteres   13.529 chars/página
+```
+
+13,5 mil caracteres por página é texto nativo denso. Nada de OCR — o que muda o
+custo do projeto por uma ordem de grandeza.
+
+> `pdftotext` sem `-enc UTF-8` escreve Latin-1 nesta máquina e cega toda busca
+> acentuada depois, sem dar erro. Já custou caro em outro acervo.
+
+### O custo, com os números medidos
+
+| | |
+|---|---|
+| Edições a baixar | 4.454 |
+| Peso por edição (amostra) | 4,7 MB |
+| PDF total | ~21 GB (descartável depois da extração) |
+| Texto extraído | ~1,6 GB |
+| Decretos normativos por dia (3 amostras) | 10, 4 e 1 |
+
+### O que a varredura entrega — e o que ela não entrega
+
+Entrega **o que foi publicado**: o texto do decreto na redação em que saiu, com
+data e página. É prova de publicação, que a base da ALERJ nem para as leis
+oferece.
+
+Não entrega **vigência**. Aqui está a diferença que decide como o servidor tem
+de responder: a base da ALERJ traz o texto *anotado* — "Revogado pela Lei nº
+5919/2011" no dispositivo. O Diário Oficial não anota nada; ele publica e segue.
+Um decreto de 2013 coletado do DOERJ chega na redação de 2013, e se foi revogado
+em 2019 nada no documento avisa. Dá para reconstruir parte disso lendo os
+decretos posteriores e extraindo as revogações expressas — é o mesmo extrator de
+referências do acervo de Mesquita — mas o resultado é **inferência nossa**, não
+declaração da fonte, e tem de ser dito assim na resposta.
+
+Duas coisas mais a medir antes de coletar: a **republicação** ("republicado por
+haver saído com incorreção" é rotina em diário oficial, e a busca devolve a
+versão errada com a mesma confiança), e se o calendário cobre mesmo 2010 sem
+buraco — 4.454 edições em 223 meses dá 20 por mês, o que bate com dia útil, mas
+bater na média não prova ausência de falha.
+
+---
+
+## 7. O que ainda não foi medido
 
 Cada item aqui é uma pergunta que muda o plano se a resposta for inesperada —
 não é lista de tarefas.
 
-1. **Onde estão os decretos de 2010 a 2026.** É a pergunta que sobrou da
-   medição da `decest.nsf`, e a única que muda o escopo do acervo. Candidatos, e
-   o que precisa ser medido em cada um: o **DOERJ** pela IOERJ (autoritativo,
-   mas é PDF de edição diária — dá para varrer 16 anos?); os portais setoriais
-   (cobrem só a própria matéria — quanto do total?); e a hipótese de haver
-   repositório oficial que eu não localizei.
+1. **Republicação no DOERJ, e o calendário sem buraco.** As duas medidas que
+   faltam antes de varrer o Diário — estão no fim da seção 6.
 2. **Quantos atos existem em cada base.** O teto de 1.000 impede contar por
    busca ampla; só se sabe depois de enumerar.
 3. **O conjunto fechado de valores de situação.** Vimos `Em Vigor` e
