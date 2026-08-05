@@ -18,7 +18,7 @@ bases distintas, e a divisão **não** é a que o nome sugere:
 | Base | Contém | Situação |
 |---|---|---|
 | `contlei.nsf` | Leis ordinárias, leis complementares, emendas constitucionais, **decretos legislativos**, resoluções | medida |
-| `decest.nsf` | **Decretos do Poder Executivo**, decretos-lei e resoluções do Executivo | medida, cobertura por confirmar |
+| `decest.nsf` | **Decretos do Poder Executivo**, decretos-lei e resoluções do Executivo | medida — **para em dezembro de 2009** |
 | `constest.nsf` | Constituição do Estado | não medida |
 
 > **A armadilha do nome.** Em `contlei.nsf`, "Decreto" é *decreto legislativo* —
@@ -36,11 +36,41 @@ bases distintas, e a divisão **não** é a que o nome sugere:
 | Emenda constitucional | 99/2025 | sim |
 | Decreto legislativo | 03/2025 | **não** |
 | Resolução (ALERJ) | 2.375/2026 | **não** |
-| Decreto estadual (`decest.nsf`) | localizado o 49.792/2025 | a medir |
+| Decreto estadual (`decest.nsf`) | **42.200, de 22/12/2009** | a medir |
 
 A base começa em **março de 1975** — a fusão da Guanabara com o antigo Estado
 do Rio. Nada anterior a isso existe aqui, e o Decreto-Lei nº 5/1975 (Código
 Tributário Estadual) é o documento mais antigo que apareceu nas sondagens.
+
+### A base de decretos parou em 2009
+
+Sondando a série de decreto em decreto, com número de cinco dígitos (token raro,
+em que a busca é confiável):
+
+```
+42.100/2009  30/10/2009   presente
+42.200/2009  22/12/2009   presente
+42.300 … 43.500           ausentes
+44.000  45.000  46.000  47.000  48.000  49.000  49.792   ausentes
+```
+
+O decreto estadual do Rio de Janeiro está hoje perto do **49.800**. A base da
+ALERJ tem até o **42.200**: faltam dezesseis anos e da ordem de **7.600
+decretos** — 2010 a 2026 inteiros, o que inclui praticamente todo decreto que
+se cita numa peça administrativa hoje.
+
+> Não confundir ausência na busca com ausência na base: a consulta devolve os
+> 50 mais relevantes, e um número curto como `5` não sobe ao topo mesmo
+> existindo. Por isso a sondagem usou números de cinco dígitos, onde o token é
+> raro o bastante para que a ausência signifique alguma coisa.
+
+**O que isso decide.** O acervo pode prometer leis, leis complementares,
+emendas, decretos legislativos e resoluções com a base da ALERJ. **Não pode
+prometer decreto do Executivo** enquanto não houver fonte para 2010→2026 — e
+não achei repositório oficial consolidado que a cubra: o que existe são
+recortes setoriais (CGE, SEI-RJ, Fazenda) e o DOERJ dia a dia. Prometer decreto
+com a base de 2009 é pior do que não prometer: devolve o texto revogado de um
+decreto que já foi substituído duas vezes, com aparência impecável.
 
 ---
 
@@ -199,9 +229,12 @@ Um documento grande (Lei 443/1981, o Estatuto dos Policiais Militares) tem
 Cada item aqui é uma pergunta que muda o plano se a resposta for inesperada —
 não é lista de tarefas.
 
-1. **Cobertura real de `decest.nsf`.** Achou o Decreto 49.792/2025, mas a busca
-   por `48.313` não devolveu nada. Ou o formato do número muda, ou há buraco na
-   série. Enquanto não se souber, não dá para prometer decretos.
+1. **Onde estão os decretos de 2010 a 2026.** É a pergunta que sobrou da
+   medição da `decest.nsf`, e a única que muda o escopo do acervo. Candidatos, e
+   o que precisa ser medido em cada um: o **DOERJ** pela IOERJ (autoritativo,
+   mas é PDF de edição diária — dá para varrer 16 anos?); os portais setoriais
+   (cobrem só a própria matéria — quanto do total?); e a hipótese de haver
+   repositório oficial que eu não localizei.
 2. **Quantos atos existem em cada base.** O teto de 1.000 impede contar por
    busca ampla; só se sabe depois de enumerar.
 3. **O conjunto fechado de valores de situação.** Vimos `Em Vigor` e

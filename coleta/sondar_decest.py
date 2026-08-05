@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import pathlib
 import re
+import time
 
 import requests
 from bs4 import BeautifulSoup
@@ -34,12 +35,23 @@ def decodifica(cru: bytes) -> str:
 
 
 def buscar(sessao: requests.Session, query: str, maximo: str = "0") -> list[dict]:
-    resp = sessao.post(
-        f"{BASE}/{VIEW}?SearchView",
-        data={"Query": query, "SearchOrder": "1", "SearchMax": maximo},
-        timeout=180,
-    )
-    resp.raise_for_status()
+    # Mesmo padrão de instabilidade da contlei.nsf: o servidor fecha a conexão
+    # sem resposta a cada poucas dezenas de pedidos, e o seguinte funciona.
+    ultimo: Exception | None = None
+    for tentativa in range(5):
+        try:
+            resp = sessao.post(
+                f"{BASE}/{VIEW}?SearchView",
+                data={"Query": query, "SearchOrder": "1", "SearchMax": maximo},
+                timeout=180,
+            )
+            resp.raise_for_status()
+            break
+        except (requests.ConnectionError, requests.Timeout, requests.HTTPError) as exc:
+            ultimo = exc
+            time.sleep(2 * (tentativa + 1) ** 2)
+    else:
+        raise RuntimeError(f"5 tentativas falharam em {query!r}") from ultimo
     sopa = BeautifulSoup(decodifica(resp.content), "html.parser")
     linhas = []
     for tr in sopa.find_all("tr"):

@@ -17,9 +17,11 @@ executado ainda.
 
 O que a medição já mudou no plano:
 
-- **Decreto do Executivo não está na base de legislação.** Fica em `decest.nsf`,
-  base separada que não aparece no menu do portal da ALERJ. Em `contlei.nsf`,
-  "Decreto" quer dizer decreto legislativo.
+- **Decreto do Executivo não está na base de legislação** — e a base onde ele
+  está foi abandonada. Fica em `decest.nsf`, que não aparece no menu do portal
+  da ALERJ e **para no Decreto 42.200, de 22/12/2009**; o decreto estadual hoje
+  está perto do 49.800. Faltam dezesseis anos. Em `contlei.nsf`, "Decreto" quer
+  dizer decreto legislativo, ato da própria Assembleia.
 - **Não há paginação.** Todo URL com `Start=` ou `Count=` derruba a conexão,
   inclusive os links que a própria ALERJ publica. A coleta entra pelo
   formulário de busca (POST), que aceita "Todos" — com teto de 1.000 por
@@ -57,6 +59,11 @@ que se contradizem, e instalar nele quebra os servidores MCP já publicados.
 
 ## Próximo passo
 
-Antes de coletar, fechar as seis perguntas em aberto na seção 6 de
-[FONTES.md](FONTES.md) — a primeira delas, a cobertura real de `decest.nsf`,
-decide se o acervo pode prometer decretos do Executivo ou não.
+Há uma decisão de escopo antes de qualquer coleta, e ela é sua: **o acervo sai
+com o que a ALERJ mantém — leis, leis complementares, emendas, decretos
+legislativos e resoluções — ou espera uma fonte para os decretos do Executivo
+de 2010 em diante?** As duas são defensáveis; o que não é defensável é publicar
+decreto com a base que parou em 2009.
+
+Depois disso, as demais perguntas em aberto estão na seção 6 de
+[FONTES.md](FONTES.md).
