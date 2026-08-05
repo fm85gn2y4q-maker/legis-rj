@@ -113,13 +113,24 @@ class Ioerj:
             "buscaordem": ordem,
             "buscar": "Buscar",
         }
-        resp = self.s.post(
-            f"{BUSCA}?acao=busca", data=dados, timeout=self.timeout,
-            headers={"Referer": BUSCA},
-        )
-        resp.raise_for_status()
-        html = _decodifica(resp.content)
-        return _parse_busca(html), _linha_total(html)
+        # Repetição igual à do GET: o servidor fecha a conexão sem resposta de
+        # vez em quando, e sem isto uma varredura de milhares de dias morre no
+        # meio por causa de um soluço de rede.
+        ultimo: Exception | None = None
+        for tentativa in range(4):
+            self._espera()
+            try:
+                resp = self.s.post(
+                    f"{BUSCA}?acao=busca", data=dados, timeout=self.timeout,
+                    headers={"Referer": BUSCA},
+                )
+                resp.raise_for_status()
+                html = _decodifica(resp.content)
+                return _parse_busca(html), _linha_total(html)
+            except (requests.ConnectionError, requests.Timeout, requests.HTTPError) as exc:
+                ultimo = exc
+                time.sleep(3 * (tentativa + 1) ** 2)
+        raise RuntimeError(f"4 tentativas falharam na busca de {texto!r}") from ultimo
 
     def calendario(self) -> list[Edicao]:
         """Todas as edições que o site oferece, numa página só.

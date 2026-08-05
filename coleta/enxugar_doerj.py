@@ -148,7 +148,14 @@ def main() -> None:
 
             # 1. o link certo
             if reg.get("primeira_tentativa"):
-                item["link"] = link_da_edicao_desviada(io, data)
+                # Refazer o caminho da busca é a parte frágil: depende de rede
+                # e o servidor derruba conexão. Falhando, o PDF fica — perder
+                # espaço é reversível, perder a conferência não.
+                try:
+                    item["link"] = link_da_edicao_desviada(io, data)
+                except Exception as exc:  # noqa: BLE001
+                    item["link"] = ""
+                    item["erro"] = f"{type(exc).__name__}: {exc}"[:200]
                 item["origem_do_link"] = "busca"
             elif data in calendario:
                 item["link"] = link_de(calendario[data]["uuid"])
