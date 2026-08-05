@@ -44,6 +44,25 @@ def _decodifica(cru: bytes) -> str:
         return cru.decode("iso-8859-1")
 
 
+MESES = {
+    "janeiro": 1, "fevereiro": 2, "março": 3, "abril": 4, "maio": 5,
+    "junho": 6, "julho": 7, "agosto": 8, "setembro": 9, "outubro": 10,
+    "novembro": 11, "dezembro": 12,
+}
+
+
+@dataclass
+class Edicao:
+    """Uma edição do Diário, como o calendário a oferece."""
+
+    data: str  # aaaa-mm-dd
+    sessao: str
+
+    @property
+    def uuid(self) -> str:
+        return _uuid_da_sessao(self.sessao)
+
+
 @dataclass
 class Materia:
     id: str
@@ -102,44 +121,119 @@ class Ioerj:
         html = _decodifica(resp.content)
         return _parse_busca(html), _linha_total(html)
 
+    def calendario(self) -> list[Edicao]:
+        """Todas as edições que o site oferece, numa página só.
+
+        É o que substitui a busca para enumerar: a busca tem teto de 100
+        resultados e não pagina; o calendário lista o arquivo inteiro. Para
+        chegar nele é preciso um `session` qualquer — usa-se o de uma busca
+        barata, e depois o calendário se basta.
+        """
+        materias, _ = self.buscar("decreto", dia="10", mes="01", ano="2023")
+        if not materias:
+            raise RuntimeError("a busca de partida não devolveu nada")
+        visualizador = self._visualizador(materias[0].href_publicacao)
+        html = _decodifica(self._pedir(visualizador).content)
+        link = re.search(r"(/portal/[^\s\"'>]*calendario=true[^\s\"'>]*)", html)
+        if not link:
+            raise RuntimeError("não achei o link do calendário")
+        pagina = _decodifica(
+            self._pedir(_absoluto(link.group(1).replace("&amp;", "&"))).content
+        )
+        return _parse_calendario(pagina)
+
+    def pdf_por_sessao(self, sessao: str) -> bytes:
+        """PDF a partir do `session` do calendário, sem passar pela busca."""
+        return self._baixar_pdf(_chave_do_pdf(_uuid_da_sessao(sessao)))
+
     def pdf_da_edicao(self, href_publicacao: str) -> bytes:
         """Percorre os saltos até o PDF da edição em que a matéria saiu."""
-        self._espera()
-        r1 = self.s.get(
-            _absoluto(href_publicacao), timeout=self.timeout,
-            headers={"Referer": f"{BUSCA}?acao=busca"},
+        visualizador = self._visualizador(href_publicacao)
+        html = _decodifica(self._pedir(visualizador).content)
+        uuid = re.search(r'var pd = "([^"]+)"', html)
+        if not uuid:
+            raise RuntimeError("não achei o identificador da edição")
+        return self._baixar_pdf(_chave_do_pdf(uuid.group(1)), referer=visualizador)
+
+    # ------------------------------------------------------------- internos
+
+    def _visualizador(self, href_publicacao: str) -> str:
+        pagina = _decodifica(
+            self._pedir(
+                _absoluto(href_publicacao), referer=f"{BUSCA}?acao=busca"
+            ).content
         )
-        r1.raise_for_status()
-        pagina1 = _decodifica(r1.content)
         # A página é um redirecionamento: traz o destino num <meta refresh>
         # ("1; url=/portal/…") e de novo num link "clique aqui". Capturar a
         # partir da barra, ou o "1; url=" entra junto e vira 404.
-        m = re.search(r"(/portal/[^\s\"'>]*mostra_edicao[^\s\"'>]*)", pagina1)
+        m = re.search(r"(/portal/[^\s\"'>]*mostra_edicao[^\s\"'>]*)", pagina)
         if not m:
+            raise RuntimeError(f"não achei o visualizador ({len(pagina)} chars)")
+        return _absoluto(m.group(1).replace("&amp;", "&"))
+
+    def _baixar_pdf(self, chave: str, referer: str = BASE) -> bytes:
+        resp = self._pedir(f"{BASE}/mostra_edicao.php?k={chave}", referer=referer)
+        if not resp.content.startswith(b"%PDF"):
             raise RuntimeError(
-                f"não achei o link do visualizador em {r1.url} "
-                f"({len(pagina1)} chars)"
+                f"não veio PDF: {resp.headers.get('Content-Type')}, "
+                f"{len(resp.content)} bytes"
             )
-        visualizador = _absoluto(m.group(1).replace("&amp;", "&"))
+        return resp.content
 
-        self._espera()
-        r2 = self.s.get(visualizador, timeout=self.timeout, headers={"Referer": _absoluto(href_publicacao)})
-        r2.raise_for_status()
-        uuid = re.search(
-            r"[0-9A-Fa-f]{8}-[0-9A-Za-z]{4,6}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}",
-            _decodifica(r2.content),
-        )
-        if not uuid:
-            raise RuntimeError("não achei o identificador da edição")
+    def _pedir(self, url: str, referer: str = BASE) -> requests.Response:
+        ultimo: Exception | None = None
+        for tentativa in range(4):
+            self._espera()
+            try:
+                resp = self.s.get(
+                    url, timeout=self.timeout, headers={"Referer": referer}
+                )
+                resp.raise_for_status()
+                return resp
+            except (requests.ConnectionError, requests.Timeout, requests.HTTPError) as exc:
+                ultimo = exc
+                time.sleep(3 * (tentativa + 1) ** 2)
+        raise RuntimeError(f"4 tentativas falharam em {url[:90]}") from ultimo
 
-        self._espera()
-        r3 = self.s.get(
-            f"{BASE}/mostra_edicao.php?k={_chave_do_pdf(uuid.group(0))}",
-            timeout=self.timeout,
-            headers={"Referer": visualizador},
-        )
-        r3.raise_for_status()
-        return r3.content
+
+def _uuid_da_sessao(sessao: str) -> str:
+    """O `session` do calendário é o identificador da edição em base64 **três
+    vezes**. Sem desfazer as três camadas não dá para montar o pedido do PDF."""
+    valor = sessao
+    for _ in range(3):
+        valor = base64.b64decode(valor).decode("ascii")
+    return valor
+
+
+def _parse_calendario(html: str) -> list[Edicao]:
+    """O calendário é uma sequência de `Ano de AAAA` seguida de tabelas de mês.
+
+    O dia só aparece como texto do link (`<a …>3</a>`) dentro de
+    `<td class="dialink">`; ano e mês vêm dos cabeçalhos acima. Ler o dia sem
+    carregar ano e mês do contexto produz datas plausíveis e erradas.
+    """
+    edicoes: list[Edicao] = []
+    ano = mes = None
+    padrao = re.compile(
+        r'class="titulosecao">\s*Ano de\s*(?P<ano>\d{4})'
+        r'|class="mes"[^>]*>\s*<b>\s*(?P<mes>[A-Za-zçÇãÃéÉ]+)\s*</b>'
+        r'|class="dialink">\s*<a href="[^"]*session=(?P<sessao>[^"&]+)"'
+        r'[^>]*>\s*(?P<dia>\d{1,2})\s*</a>',
+        re.IGNORECASE | re.DOTALL,
+    )
+    for m in padrao.finditer(html):
+        if m.group("ano"):
+            ano = int(m.group("ano"))
+        elif m.group("mes"):
+            mes = MESES.get(m.group("mes").strip().lower())
+        elif m.group("sessao") and ano and mes:
+            edicoes.append(
+                Edicao(
+                    data=f"{ano:04d}-{mes:02d}-{int(m.group('dia')):02d}",
+                    sessao=m.group("sessao"),
+                )
+            )
+    return edicoes
 
 
 def _chave_do_pdf(pd: str) -> str:

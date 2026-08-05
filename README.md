@@ -71,10 +71,33 @@ py -3.12 -m venv .venv
 O ambiente é por projeto: o Python global desta máquina carrega dependências
 que se contradizem, e instalar nele quebra os servidores MCP já publicados.
 
+## Coleta
+
+Duas varreduras retomáveis, uma por fonte, rodando desde 05/08/2026:
+
+```bash
+.venv\Scripts\python.exe coleta\coletar_doerj.py
+```
+
+```bash
+.venv\Scripts\python.exe coleta\coletar_alerj.py
+```
+
+Podem ser interrompidas a qualquer momento: o manifesto do DOERJ e o progresso
+da ALERJ dizem onde retomar. O que já veio fica em `dados/`, fora do Git.
+
+Duas coisas que a coleta descobriu e que valem por si:
+
+- **O calendário do DOERJ às vezes entrega outro caderno** — 1 página no lugar
+  de 83, íntegro, sem nada que denuncie. O coletor confere cada edição contra a
+  busca do dia e desvia quando falta página.
+- **O teto de 1.000 da busca da ALERJ não respeita a partição por número.** Os
+  números de 1 a 8 estouraram o teto, todos. Fica para depois da varredura uma
+  conferência de série: número que devia existir e não apareceu volta para a
+  busca combinado com o ano.
+
 ## Próximo passo
 
-Duas medidas fecham a Fase 1 do lado do Diário: **republicação** (o DOERJ
-republica ato com incorreção, e a busca devolve a versão errada com a mesma
-confiança) e **integridade do calendário** em 2010. Depois disso, coletar.
-
-As demais perguntas em aberto estão na seção 7 de [FONTES.md](FONTES.md).
+Terminadas as varreduras: conferir a série da ALERJ, extrair os atos do texto
+do Diário e montar o banco. As perguntas ainda em aberto estão na seção 8 de
+[FONTES.md](FONTES.md).

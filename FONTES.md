@@ -310,22 +310,89 @@ decretos posteriores e extraindo as revogações expressas — é o mesmo extrat
 referências do acervo de Mesquita — mas o resultado é **inferência nossa**, não
 declaração da fonte, e tem de ser dito assim na resposta.
 
-Duas coisas mais a medir antes de coletar: a **republicação** ("republicado por
-haver saído com incorreção" é rotina em diário oficial, e a busca devolve a
-versão errada com a mesma confiança), e se o calendário cobre mesmo 2010 sem
-buraco — 4.454 edições em 223 meses dá 20 por mês, o que bate com dia útil, mas
-bater na média não prova ausência de falha.
+### O calendário não tem buraco — mas engana de outro jeito
+
+`4.455` edições, de **31/03/2008 a 03/08/2026**. Comparando com os dias úteis de
+cada ano (feriado nacional fixo descontado; móvel, não):
+
+```
+ano   edições   dias úteis   faltando   maior rombo
+2010      238          255         17            3
+2015      238          254         16            4
+2020      241          255         14            4
+2025      244          257         15            4
+```
+
+De 2009 em diante, de 10 a 18 dias úteis por ano sem edição, e o maior rombo é
+de 2 a 4 dias — exatamente o tamanho de Carnaval, Sexta-feira Santa e Corpus
+Christi, que ficaram de fora da conta de propósito. **Não há falha estrutural.**
+(2008 só começa em 31/03, e o "rombo" de 43 dias é o começo da série.)
+
+O engano é outro, e teria estragado a coleta inteira: **o calendário dá um link
+por dia, e nem sempre é a edição inteira.**
+
+```
+01/12/2021   link do calendário: 2 páginas   busca mostra matéria na página 51
+01/12/2022   link do calendário: 1 página    busca mostra matéria na página 83
+```
+
+É outro caderno, e o arquivo curto chega íntegro — nada nele denuncia a falta.
+Quem confiasse no calendário coletaria um PDF de uma página e registraria o dia
+como feito. Por isso o coletor confere cada edição contra a busca do próprio dia
+e, sendo o PDF menor que a maior página com matéria, entra de novo pelo caminho
+da busca. Nos dois casos acima o desvio trouxe 51 e 87 páginas.
+
+### Republicação: é rotina, mas raramente alcança decreto
+
+Uma edição por ano, de 2010 a 2026, 17 no total:
+
+```
+351 marcas de republicação, errata, retificação ou incorreção   (~21 por edição)
+ 10 delas a menos de 400 caracteres da palavra DECRETO          (~0,6 por edição)
+```
+
+Vinte marcas por edição confirmam que aqui é a mesma história do diário de
+Mesquita: a versão errada e a corrigida saem com a mesma cara, e a busca devolve
+as duas com a mesma confiança. Mas o grosso é errata de extrato de contrato e de
+ato de pessoal; **decreto republicado aparece uma vez a cada duas edições**.
+É pouco para inviabilizar, e é demais para ignorar: o processamento tem de casar
+número de decreto com data e ficar com a última publicação, não com a primeira.
+
+O texto continuou nativo em todos os anos da amostra — de 9,7 mil a 20,6 mil
+caracteres por página. E o peso médio ficou em **3,4 MB**, não nos 4,7 MB da
+primeira amostra: o acervo inteiro deve dar perto de **15 GB**, não 21.
 
 ---
 
-## 7. O que ainda não foi medido
+## 7. A coleta, e o que ela já ensinou
+
+Rodando desde 05/08/2026, retomável, uma varredura por fonte:
+
+| | |
+|---|---|
+| `coletar_doerj.py` | 4.455 edições; PDF + texto por dia, com a conferência de completude acima |
+| `coletar_alerj.py` | fase A varre os números 1..11.293 e monta o índice; fase B baixa o HTML de cada ato |
+
+**O teto de 1.000 não respeita a partição por número.** Os oito primeiros
+números — 1 a 8 — estouraram o teto, todos. Número curto aparece em citação por
+todo o acervo, e a consulta volta cheia de atos que apenas o mencionam; se o
+próprio ato nº 3 não estiver entre os 1.000 devolvidos, ele não entra, e nada
+avisa. Só esses oito números já renderam 4.867 atos distintos.
+
+O remédio não é refinar o padrão: é conferir depois. A série de cada espécie é
+sequencial, então, terminada a varredura, sabe-se exatamente que números deviam
+existir e não apareceram. Esses voltam para a busca combinados com o ano
+(`ConectorProposicao=And`), que parte o resultado em pedaços que cabem no teto.
+A lista de consultas truncadas fica em `dados/alerj/progresso.json`.
+
+---
+
+## 8. O que ainda não foi medido
 
 Cada item aqui é uma pergunta que muda o plano se a resposta for inesperada —
 não é lista de tarefas.
 
-1. **Republicação no DOERJ, e o calendário sem buraco.** As duas medidas que
-   faltam antes de varrer o Diário — estão no fim da seção 6.
-2. **Quantos atos existem em cada base.** O teto de 1.000 impede contar por
+1. **Quantos atos existem em cada base.** O teto de 1.000 impede contar por
    busca ampla; só se sabe depois de enumerar.
 3. **O conjunto fechado de valores de situação.** Vimos `Em Vigor` e
    `Revogado`. Falta saber se há `Declarado Inconstitucional`, `Sem efeito`,

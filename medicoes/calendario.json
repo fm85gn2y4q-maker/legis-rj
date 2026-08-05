@@ -1,0 +1,116 @@
+{
+  "2008": {
+    "edicoes": 205,
+    "dias_uteis": 258,
+    "faltando": 53,
+    "maior_rombo": 43
+  },
+  "2009": {
+    "edicoes": 237,
+    "dias_uteis": 254,
+    "faltando": 17,
+    "maior_rombo": 3
+  },
+  "2010": {
+    "edicoes": 238,
+    "dias_uteis": 255,
+    "faltando": 17,
+    "maior_rombo": 3
+  },
+  "2011": {
+    "edicoes": 245,
+    "dias_uteis": 255,
+    "faltando": 10,
+    "maior_rombo": 3
+  },
+  "2012": {
+    "edicoes": 237,
+    "dias_uteis": 255,
+    "faltando": 18,
+    "maior_rombo": 3
+  },
+  "2013": {
+    "edicoes": 242,
+    "dias_uteis": 257,
+    "faltando": 15,
+    "maior_rombo": 4
+  },
+  "2014": {
+    "edicoes": 241,
+    "dias_uteis": 257,
+    "faltando": 16,
+    "maior_rombo": 4
+  },
+  "2015": {
+    "edicoes": 238,
+    "dias_uteis": 254,
+    "faltando": 16,
+    "maior_rombo": 4
+  },
+  "2016": {
+    "edicoes": 239,
+    "dias_uteis": 255,
+    "faltando": 16,
+    "maior_rombo": 3
+  },
+  "2017": {
+    "edicoes": 239,
+    "dias_uteis": 253,
+    "faltando": 14,
+    "maior_rombo": 4
+  },
+  "2018": {
+    "edicoes": 240,
+    "dias_uteis": 254,
+    "faltando": 14,
+    "maior_rombo": 4
+  },
+  "2019": {
+    "edicoes": 247,
+    "dias_uteis": 257,
+    "faltando": 11,
+    "maior_rombo": 4
+  },
+  "2020": {
+    "edicoes": 241,
+    "dias_uteis": 255,
+    "faltando": 14,
+    "maior_rombo": 4
+  },
+  "2021": {
+    "edicoes": 247,
+    "dias_uteis": 255,
+    "faltando": 10,
+    "maior_rombo": 2
+  },
+  "2022": {
+    "edicoes": 246,
+    "dias_uteis": 255,
+    "faltando": 10,
+    "maior_rombo": 2
+  },
+  "2023": {
+    "edicoes": 241,
+    "dias_uteis": 253,
+    "faltando": 13,
+    "maior_rombo": 4
+  },
+  "2024": {
+    "edicoes": 247,
+    "dias_uteis": 258,
+    "faltando": 14,
+    "maior_rombo": 4
+  },
+  "2025": {
+    "edicoes": 244,
+    "dias_uteis": 257,
+    "faltando": 15,
+    "maior_rombo": 4
+  },
+  "2026": {
+    "edicoes": 141,
+    "dias_uteis": 152,
+    "faltando": 11,
+    "maior_rombo": 4
+  }
+}

@@ -1,0 +1,223 @@
+[
+  {
+    "data": "2010-12-01",
+    "mb": 3.8,
+    "paginas": 36,
+    "chars_por_pagina": 14533,
+    "marcas": {
+      "republicacao": 11,
+      "errata": 0,
+      "retificacao": 16,
+      "incorrecao": 9
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2011-12-01",
+    "mb": 2.9,
+    "paginas": 40,
+    "chars_por_pagina": 14422,
+    "marcas": {
+      "republicacao": 7,
+      "errata": 4,
+      "retificacao": 15,
+      "incorrecao": 5
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2012-12-03",
+    "mb": 3.2,
+    "paginas": 32,
+    "chars_por_pagina": 14957,
+    "marcas": {
+      "republicacao": 11,
+      "errata": 11,
+      "retificacao": 14,
+      "incorrecao": 7
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2013-12-02",
+    "mb": 4.2,
+    "paginas": 48,
+    "chars_por_pagina": 15365,
+    "marcas": {
+      "republicacao": 8,
+      "errata": 4,
+      "retificacao": 8,
+      "incorrecao": 3
+    },
+    "marca_perto_de_decreto": 1
+  },
+  {
+    "data": "2014-12-01",
+    "mb": 2.8,
+    "paginas": 32,
+    "chars_por_pagina": 13991,
+    "marcas": {
+      "republicacao": 5,
+      "errata": 6,
+      "retificacao": 12,
+      "incorrecao": 4
+    },
+    "marca_perto_de_decreto": 2
+  },
+  {
+    "data": "2015-12-01",
+    "mb": 2.1,
+    "paginas": 26,
+    "chars_por_pagina": 14848,
+    "marcas": {
+      "republicacao": 5,
+      "errata": 0,
+      "retificacao": 5,
+      "incorrecao": 4
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2016-12-01",
+    "mb": 1.8,
+    "paginas": 34,
+    "chars_por_pagina": 16408,
+    "marcas": {
+      "republicacao": 8,
+      "errata": 0,
+      "retificacao": 10,
+      "incorrecao": 8
+    },
+    "marca_perto_de_decreto": 1
+  },
+  {
+    "data": "2017-12-01",
+    "mb": 2.3,
+    "paginas": 18,
+    "chars_por_pagina": 16068,
+    "marcas": {
+      "republicacao": 0,
+      "errata": 0,
+      "retificacao": 7,
+      "incorrecao": 0
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2018-12-03",
+    "mb": 2.6,
+    "paginas": 42,
+    "chars_por_pagina": 12030,
+    "marcas": {
+      "republicacao": 4,
+      "errata": 1,
+      "retificacao": 13,
+      "incorrecao": 2
+    },
+    "marca_perto_de_decreto": 4
+  },
+  {
+    "data": "2019-12-02",
+    "mb": 3.2,
+    "paginas": 30,
+    "chars_por_pagina": 14661,
+    "marcas": {
+      "republicacao": 10,
+      "errata": 0,
+      "retificacao": 11,
+      "incorrecao": 5
+    },
+    "marca_perto_de_decreto": 1
+  },
+  {
+    "data": "2020-12-01",
+    "mb": 2.3,
+    "paginas": 30,
+    "chars_por_pagina": 14976,
+    "marcas": {
+      "republicacao": 4,
+      "errata": 0,
+      "retificacao": 5,
+      "incorrecao": 3
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2021-12-01",
+    "mb": 0.4,
+    "paginas": 2,
+    "chars_por_pagina": 20624,
+    "marcas": {
+      "republicacao": 0,
+      "errata": 0,
+      "retificacao": 0,
+      "incorrecao": 0
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2022-12-01",
+    "mb": 0.3,
+    "paginas": 1,
+    "chars_por_pagina": 11379,
+    "marcas": {
+      "republicacao": 0,
+      "errata": 0,
+      "retificacao": 0,
+      "incorrecao": 0
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2023-12-01",
+    "mb": 4.6,
+    "paginas": 66,
+    "chars_por_pagina": 12578,
+    "marcas": {
+      "republicacao": 4,
+      "errata": 0,
+      "retificacao": 13,
+      "incorrecao": 3
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2024-12-02",
+    "mb": 8.1,
+    "paginas": 79,
+    "chars_por_pagina": 9752,
+    "marcas": {
+      "republicacao": 7,
+      "errata": 0,
+      "retificacao": 6,
+      "incorrecao": 5
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2025-12-01",
+    "mb": 3.6,
+    "paginas": 34,
+    "chars_por_pagina": 16861,
+    "marcas": {
+      "republicacao": 6,
+      "errata": 2,
+      "retificacao": 7,
+      "incorrecao": 6
+    },
+    "marca_perto_de_decreto": 0
+  },
+  {
+    "data": "2026-08-03",
+    "mb": 5.3,
+    "paginas": 75,
+    "chars_por_pagina": 11403,
+    "marcas": {
+      "republicacao": 6,
+      "errata": 2,
+      "retificacao": 15,
+      "incorrecao": 4
+    },
+    "marca_perto_de_decreto": 1
+  }
+]
