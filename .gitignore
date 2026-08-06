@@ -8,3 +8,6 @@ dados/
 *.sqlite
 *.db
 *.mcpb
+
+# log da tarefa agendada
+dados/agendado*.log

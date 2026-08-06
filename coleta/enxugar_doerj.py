@@ -72,6 +72,13 @@ def ja_enxugadas() -> set[str]:
     }
 
 
+# `edicoes.jsonl` é append-only, como o manifesto: quando um dia é refeito
+# (reparo de edição incompleta, por exemplo), a linha nova fica valendo e a
+# antiga permanece como histórico. Quem lê o índice tem de ficar com a última
+# linha de cada data — ler a primeira devolve o link de antes do reparo, que
+# aponta para o caderno errado.
+
+
 def link_da_edicao_desviada(io: Ioerj, data: str) -> str:
     """Refaz o caminho da busca para achar o identificador do caderno certo."""
     import re
@@ -121,12 +128,21 @@ def main() -> None:
         for data, reg in sorted(manifesto.items())
         if data not in feitas and reg.get("status") in ("ok", "incompleta")
     ]
-    if len(sys.argv) > 1:
-        if sys.argv[1].isdigit():
-            pendentes = pendentes[: int(sys.argv[1])]
-        else:  # datas soltas, para conferir um caso conhecido
-            alvos = set(sys.argv[1:])
-            pendentes = [r for r in manifesto.values() if r["data"] in alvos]
+    argumentos = [a for a in sys.argv[1:] if a != "--refazer"]
+    if argumentos:
+        if argumentos[0].isdigit():
+            pendentes = pendentes[: int(argumentos[0])]
+        else:
+            # Datas soltas. Com `--refazer`, passa por cima do índice: é como
+            # se corrige o dia que foi enxugado antes de a coleta ser reparada,
+            # e cujo link no índice aponta para o caderno velho.
+            alvos = set(argumentos)
+            pendentes = [
+                r
+                for r in manifesto.values()
+                if r["data"] in alvos
+                and ("--refazer" in sys.argv or r["data"] not in feitas)
+            ]
     print(f"{len(pendentes)} edições a conferir e enxugar")
 
     io = Ioerj(pausa=1.0)
@@ -147,7 +163,15 @@ def main() -> None:
             }
 
             # 1. o link certo
-            if reg.get("primeira_tentativa"):
+            if reg.get("reparado"):
+                # O reparo abriu vários cadernos e escolheu um; o identificador
+                # que ele gravou é o do arquivo que está em disco. Cair no
+                # calendário aqui grava link para outro caderno — medido em
+                # 02/02/2023, onde o calendário aponta 6253E6AC e o acervo tem
+                # 47E6F87A.
+                item["link"] = link_de(reg["uuid"])
+                item["origem_do_link"] = "reparo"
+            elif reg.get("primeira_tentativa"):
                 # Refazer o caminho da busca é a parte frágil: depende de rede
                 # e o servidor derruba conexão. Falhando, o PDF fica — perder
                 # espaço é reversível, perder a conferência não.

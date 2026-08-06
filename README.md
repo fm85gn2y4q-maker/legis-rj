@@ -86,6 +86,31 @@ Duas varreduras retomáveis, uma por fonte, rodando desde 05/08/2026:
 Podem ser interrompidas a qualquer momento: o manifesto do DOERJ e o progresso
 da ALERJ dizem onde retomar. O que já veio fica em `dados/`, fora do Git.
 
+### Rodando sozinho
+
+A Tarefa Agendada **legis-rj-coleta** chama `rodar.cmd` a cada 15 minutos: faz
+o que falta e sai; nada pendente, sai em segundos. Log em
+`dados/agendado.log`, erros em `dados/agendado_saida.log`.
+
+Três coisas que essa tarefa aprendeu na marra, e que valem para a próxima:
+
+- **Nasce proibida de rodar fora da tomada.** `DisallowStartIfOnBatteries` vem
+  ligado por padrão, e a tarefa fica em *Enfileirados* sem nunca executar — sem
+  erro nenhum. Corrigido no XML.
+- **O agendador parte o caminho no espaço.** `/tr` com um caminho contendo
+  "Matheus Menegatti" virou `<Command>C:\Users\Matheus</Command>` mais
+  `<Arguments>Menegatti\...</Arguments>`. Registrar por XML resolve.
+- **Sob o agendador não há console.** Processo que morre antes de abrir o log
+  não deixa rastro, e a tarefa aparece como bem-sucedida. Por isso o `.cmd`
+  registra a partida e captura o erro padrão, e o `.cmd` é ASCII puro — acento
+  em linha `rem` vira comando inválido.
+
+Para conferir ou mexer:
+
+```bash
+schtasks /query /tn legis-rj-coleta /fo LIST /v
+```
+
 Duas coisas que a coleta descobriu e que valem por si:
 
 - **O calendário do DOERJ às vezes entrega outro caderno** — 1 página no lugar
