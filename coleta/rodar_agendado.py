@@ -97,6 +97,50 @@ def etapa(nome: str, funcao) -> None:
         anota(f"--- {nome}: FALHOU\n{traceback.format_exc()}")
 
 
+def marcar_alerj_concluida() -> None:
+    """Deixa em disco o aviso de que a ALERJ fechou.
+
+    O aviso não pode depender de haver alguém olhando: a coleta anda pela
+    Tarefa Agendada, de madrugada, sem conversa nenhuma aberta. Então o fim
+    fica gravado, e quem chegar depois lê o arquivo em vez de recontar tudo.
+
+    Duas condições, e as duas precisam valer: a varredura chegou ao último
+    número, e todo ato do índice tem documento em disco. Só a primeira já
+    aconteceu antes com a fase B pela metade.
+    """
+    import json
+
+    dados = RAIZ / "dados" / "alerj"
+    progresso = dados / "progresso.json"
+    indice = dados / "indice.jsonl"
+    if not (progresso.exists() and indice.exists()):
+        return
+
+    import coletar_alerj
+
+    estado = json.loads(progresso.read_text("utf-8"))
+    unids = {
+        json.loads(l)["unid"]
+        for l in indice.read_text("utf-8").splitlines()
+        if l.strip()
+    }
+    baixados = {p.stem for p in (dados / "docs").glob("*.html")}
+    faltando = unids - baixados
+    if estado.get("ultimo_numero", 0) < coletar_alerj.MAIOR_NUMERO or faltando:
+        return
+
+    aviso = {
+        "concluida_em": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "atos_no_indice": len(unids),
+        "documentos": len(baixados),
+        "consultas_truncadas": estado.get("truncadas", []),
+    }
+    (dados / "CONCLUIDA.json").write_text(
+        json.dumps(aviso, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    anota(f"ALERJ CONCLUÍDA: {len(unids)} atos, {len(baixados)} documentos")
+
+
 def main() -> None:
     (RAIZ / "dados").mkdir(exist_ok=True)
     if not pegar_trava():
@@ -106,6 +150,7 @@ def main() -> None:
         import enxugar_doerj
 
         etapa("ALERJ", coletar_alerj.main)
+        marcar_alerj_concluida()
         etapa("enxugar DOERJ", enxugar_doerj.main)
         anota("nada mais pendente nesta passada")
     finally:
