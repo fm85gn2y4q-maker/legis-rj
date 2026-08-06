@@ -40,9 +40,12 @@ def estado() -> tuple[int, int, int]:
 
 
 def main() -> None:
+    # Com a fase A suspensa (ver rodar_agendado.alerj), o último número não
+    # chega ao fim da série e a régua passa a ser só a fase B.
+    suspensa = (DADOS / "PULAR_FASE_A").exists()
     while True:
         numero, no_indice, com_documento = estado()
-        if numero >= MAIOR_NUMERO and com_documento >= no_indice:
+        if (suspensa or numero >= MAIOR_NUMERO) and com_documento >= no_indice:
             print(
                 f"ALERJ CONCLUÍDA — {no_indice} atos no índice, "
                 f"{com_documento} documentos em disco",

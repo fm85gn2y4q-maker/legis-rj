@@ -97,6 +97,33 @@ def etapa(nome: str, funcao) -> None:
         anota(f"--- {nome}: FALHOU\n{traceback.format_exc()}")
 
 
+PULAR_FASE_A = "PULAR_FASE_A"
+
+
+def alerj(coletar_alerj) -> None:
+    """Roda a coleta da ALERJ, com uma chave para inverter a ordem das fases.
+
+    Existindo o arquivo `dados/alerj/PULAR_FASE_A`, só a fase B roda. É uma
+    inversão deliberada, não um atalho: a varredura por número deixou de
+    render — parou em cerca de um ato novo a cada duzentas consultas — e a
+    garantia de completude não vem dela. Vem da conferência de série, que só
+    pode ser feita depois de ler os documentos, porque é neles que está o
+    número de cada ato. Baixar primeiro e conferir depois chega ao mesmo lugar
+    fazendo só as consultas que a conferência apontar.
+
+    O arquivo guarda em que número a varredura parou: retomá-la é apagar o
+    arquivo.
+    """
+    indice = coletar_alerj.carregar_indice()
+    a = coletar_alerj.Alerj(pausa=1.2)
+    if (RAIZ / "dados" / "alerj" / PULAR_FASE_A).exists():
+        anota("fase A suspensa por marcador; indo direto para os documentos")
+        coletar_alerj.fase_b(a, indice)
+        return
+    coletar_alerj.fase_a(a, indice)
+    coletar_alerj.fase_b(a, coletar_alerj.carregar_indice())
+
+
 def marcar_alerj_concluida() -> None:
     """Deixa em disco o aviso de que a ALERJ fechou.
 
@@ -126,13 +153,22 @@ def marcar_alerj_concluida() -> None:
     }
     baixados = {p.stem for p in (dados / "docs").glob("*.html")}
     faltando = unids - baixados
-    if estado.get("ultimo_numero", 0) < coletar_alerj.MAIOR_NUMERO or faltando:
+    # Com a fase A suspensa, o "último número" não chega ao fim da série e
+    # nunca chegaria: a régua passa a ser só a fase B, e o aviso diz até onde
+    # a varredura tinha ido, para ninguém ler o arquivo como se ela tivesse
+    # terminado.
+    suspensa = (dados / PULAR_FASE_A).exists()
+    if faltando:
+        return
+    if not suspensa and estado.get("ultimo_numero", 0) < coletar_alerj.MAIOR_NUMERO:
         return
 
     aviso = {
         "concluida_em": time.strftime("%Y-%m-%d %H:%M:%S"),
         "atos_no_indice": len(unids),
         "documentos": len(baixados),
+        "fase_a_varreu_ate": estado.get("ultimo_numero", 0),
+        "fase_a_suspensa": suspensa,
         "consultas_truncadas": estado.get("truncadas", []),
     }
     (dados / "CONCLUIDA.json").write_text(
@@ -149,7 +185,7 @@ def main() -> None:
         import coletar_alerj
         import enxugar_doerj
 
-        etapa("ALERJ", coletar_alerj.main)
+        etapa("ALERJ", lambda: alerj(coletar_alerj))
         marcar_alerj_concluida()
         etapa("enxugar DOERJ", enxugar_doerj.main)
         anota("nada mais pendente nesta passada")
