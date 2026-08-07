@@ -149,7 +149,13 @@ def fase_b(a: Alerj, indice: dict[str, dict]) -> None:
     for i, reg in enumerate(pendentes, 1):
         destino = DOCS / f"{reg['unid']}.html"
         try:
-            html = a.documento("https://alerjln1.alerj.rj.gov.br" + reg["caminho"])
+            # Sem o `&Highlight=`: o link da busca manda o Domino grifar o
+            # termo procurado **dentro** do documento, e o grifo entra no meio
+            # dos números — `<font color='green'><b>1</b></font>981` no lugar de
+            # 1981. O texto continua lá, mas quem achatar o HTML sem cuidado
+            # lê "1 981" e perde o ano. Melhor não trazer o grifo.
+            caminho = reg["caminho"].split("&")[0]
+            html = a.documento("https://alerjln1.alerj.rj.gov.br" + caminho)
             destino.write_text(html, encoding="utf-8")
         except Exception as exc:  # noqa: BLE001
             print(f"  {reg['unid']}: {type(exc).__name__}: {exc}"[:200], flush=True)

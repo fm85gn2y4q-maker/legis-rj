@@ -1,0 +1,32 @@
+﻿6418 documentos
+
+--- campos faltando ---
+     0  numero  (0.0%)
+     0  ano  (0.0%)
+     0  data  (0.0%)
+    19  situacao  (0.3%)
+
+--- situação ---
+  5848  Em Vigor
+   439  Revogado
+    74  Declarado Inconstitucional
+    28  Em Vigor com alterações
+    19  (sem)
+     5  Suspenso
+     3  Declarado Parcialmente Inconstitucional
+     2  Trabalhando o texto
+
+--- documentos com anotação ---
+   311  nova_redacao  (4.8%)
+   221  inconstitucionalidade  (3.4%)
+   108  revogacao_expressa  (1.7%)
+
+--- a fonte discorda de si mesma na data: 205 (3.2%) ---
+    0115cf84b4  campo 1990-04-20  texto 1990-04-27
+    01345290c1  campo 2007-07-16  texto 2007-08-16
+    01afd3dc85  campo 0007-01-08  texto 2007-01-08
+    01f879fc4f  campo 2007-05-31  texto 2007-05-29
+    0273ddd80f  campo 2018-01-01  texto 2018-03-01
+    039b2f51c9  campo 0007-02-27  texto 2007-02-27
+    0493f502ed  campo 1989-08-17  texto 1989-08-24
+    05f7a4dc9e  campo 1997-04-21  texto 1997-03-17
