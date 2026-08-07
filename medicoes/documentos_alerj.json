@@ -1,0 +1,163 @@
+{
+  "documentos": 6044,
+  "especies": [
+    [
+      "Lei Ordinária",
+      6044
+    ]
+  ],
+  "rotulos": [
+    [
+      "Data Da Lei",
+      6044
+    ],
+    [
+      "Texto Da Lei",
+      6044
+    ],
+    [
+      "Lei Nº",
+      6044
+    ],
+    [
+      "Ementa",
+      178
+    ],
+    [
+      "Lei N°",
+      68
+    ],
+    [
+      "Lei Complementar Nº",
+      53
+    ],
+    [
+      "Decreto Nº",
+      43
+    ],
+    [
+      "Resolução Nº",
+      22
+    ],
+    [
+      "Lei No",
+      5
+    ],
+    [
+      "Decreto N°",
+      4
+    ],
+    [
+      "Autoria",
+      1
+    ]
+  ],
+  "situacoes": [
+    [
+      "Em Vigor",
+      5508
+    ],
+    [
+      "Revogado",
+      415
+    ],
+    [
+      "Declarado Inconstitucional",
+      65
+    ],
+    [
+      "Em Vigor com alterações",
+      28
+    ],
+    [
+      "(sem colchete)",
+      19
+    ],
+    [
+      "Suspenso",
+      5
+    ],
+    [
+      "Declarado Parcialmente Inconstitucional",
+      3
+    ],
+    [
+      "Trabalhando o texto",
+      1
+    ]
+  ],
+  "marcas": [
+    [
+      "vetado",
+      6044
+    ],
+    [
+      "nova_redacao",
+      306
+    ],
+    [
+      "inconstitucional",
+      207
+    ],
+    [
+      "revogado_por",
+      95
+    ],
+    [
+      "orgao_especial",
+      62
+    ]
+  ],
+  "sem_identidade": [
+    "0005bfced3b5924a83257504006e9eeb.html",
+    "000e246e3f22286f032565830061f395.html",
+    "0013dbda4e35f4930325861d006f5fb8.html",
+    "0049c023a2be5a1d032586db005faabc.html",
+    "00808c1b068b4c25032566b10073469c.html",
+    "00c8c8d93edf73f9032585ac005af791.html",
+    "00f0ef814f9f403c032565ae007516f9.html",
+    "01115fc3d5ce79f603258a5500046daf.html",
+    "013389faeca37dca03258e0600491770.html",
+    "01345290c1e5af1c83257340006b27a6.html",
+    "017c5d2a19a403f083257505006d4bdd.html",
+    "017e439b81aa5b700325865700640e38.html",
+    "01973f8ee390e60b03258b5e007236fe.html",
+    "01afd3dc854660fe8325726100659ee0.html",
+    "01cc04eee53b3b30032564fb005c2ddf.html",
+    "01dae1e51ef8b7e083257133006103a6.html",
+    "01de8d34599c6d1e0325650e00743f2a.html",
+    "01e83cf510066dc0832572c3006256eb.html",
+    "0203fef976be839483256e740052c6b6.html",
+    "02081efd70ee9a5d032586b5007c4033.html",
+    "02220841d892189a032584c800689b09.html",
+    "029999cdfa6682fa83258489007367eb.html",
+    "02c67235bfe739c703258dbf0045187d.html",
+    "02de0ccf49874548832577a6005b2aff.html",
+    "03171bb2b7c4686b83257af6005aa0b8.html",
+    "0317f938055c7077032587ec00728eba.html",
+    "0318b41003e3c4ce0325862c005fb976.html",
+    "0324570a185c21fa832584a2005edf01.html",
+    "035a279fad9b3b49032585c0006becfd.html",
+    "038a8b238437186603256552007739f7.html",
+    "039b2f51c9ccd4c8832572640052c5e6.html",
+    "03b51dda30dbc15103258d1b00451fe9.html",
+    "03cc21e7cc1339920325659a006b500f.html",
+    "03ed129481c239868325847a006050a5.html",
+    "04044d87ce1fe6c803258d0f00437dd6.html",
+    "042265d17c5f96fa0325654c006b8a33.html",
+    "0422d0c6993ec3a483257f31005a50b8.html",
+    "04344994891805b103258599005f1aad.html",
+    "0452be67c57b5faf032566020076f050.html",
+    "0480c14a0f05c36b83257d6d005bc52b.html",
+    "04cb96a19be6d8fd03258b8e0079d47d.html",
+    "04cd0b1f50f0a36203258859007c57b5.html",
+    "04dff51879e6aabb032586cf006ea05b.html",
+    "051df791cdd6ca6603256541006cf522.html",
+    "0566c0f78827abb4032587f900710498.html",
+    "0580e4e1c43775b90325659a006ba83e.html",
+    "0596ea355c4e24e5032586380074d2b3.html",
+    "059f601020e9ea7d83257723006656b7.html",
+    "05adae4b65c498cb03258e130041f71d.html",
+    "05b219443637ec7f032586570056f7f3.html"
+  ]
+}

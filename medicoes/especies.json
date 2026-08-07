@@ -1,0 +1,32 @@
+{
+  "lei_ordinaria": {
+    "formulario": "LeiOrdInt",
+    "view": "c8aa0900025feef6032564ec0060dfff",
+    "busca": "35d3e73a008ab6db83257dc50046d255"
+  },
+  "lei_complementar": {
+    "formulario": "LeiCompInt",
+    "view": "a99e317a9cfec383032568620071f5d2",
+    "busca": "35d3e73a008ab6db83257dc50046d255"
+  },
+  "emenda_constitucional": {
+    "formulario": "EmendaInt",
+    "view": "c1eb7d14b66cd425032565000049f541",
+    "busca": "35d3e73a008ab6db83257dc50046d255"
+  },
+  "decreto_legislativo": {
+    "formulario": "DecretoInt",
+    "view": "1103082e25d77b2203256500004ddfd5",
+    "busca": "35d3e73a008ab6db83257dc50046d255"
+  },
+  "resolucao": {
+    "formulario": "ResolucaoInt",
+    "view": "803720d56d09c0e70325663200757b59",
+    "busca": "35d3e73a008ab6db83257dc50046d255"
+  },
+  "geral": {
+    "formulario": "GeralInt",
+    "view": "f25edae7e64db53b032564fe005262ef",
+    "busca": "35d3e73a008ab6db83257dc50046d255"
+  }
+}

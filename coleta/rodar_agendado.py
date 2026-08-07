@@ -151,6 +151,15 @@ def marcar_alerj_concluida() -> None:
         for l in indice.read_text("utf-8").splitlines()
         if l.strip()
     }
+    # As demais espécies vivem em outro índice e entram na mesma conta: dizer
+    # "ALERJ concluída" com as leis complementares faltando seria falso.
+    outras = dados / "indice_especies.jsonl"
+    if outras.exists():
+        unids |= {
+            json.loads(l)["unid"]
+            for l in outras.read_text("utf-8").splitlines()
+            if l.strip()
+        }
     baixados = {p.stem for p in (dados / "docs").glob("*.html")}
     faltando = unids - baixados
     # Com a fase A suspensa, o "último número" não chega ao fim da série e
@@ -183,9 +192,13 @@ def main() -> None:
         return
     try:
         import coletar_alerj
+        import coletar_especies
         import enxugar_doerj
 
         etapa("ALERJ", lambda: alerj(coletar_alerj))
+        # Só depois das leis ordinárias: as duas coletas batem no mesmo
+        # servidor, e ele já derruba conexão com uma só.
+        etapa("ALERJ — demais espécies", coletar_especies.main)
         marcar_alerj_concluida()
         etapa("enxugar DOERJ", enxugar_doerj.main)
         anota("nada mais pendente nesta passada")
