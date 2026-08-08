@@ -51,9 +51,16 @@ ESPECIES = RAIZ / "medicoes" / "especies.json"
 TETO = 1_000
 CONSULTA_AMPLA = "de"
 
-# Topo de cada série, medido em inventario.py. Só usado nas espécies grandes,
-# onde a consulta ampla estoura o teto.
-TOPO = {"resolucao": 2_400, "geral": 3_000}
+# A base começa em março de 1975, com a fusão da Guanabara.
+ANOS = range(1975, 2027)
+
+# "Legislações Gerais" NÃO se coleta. Medido: numa amostra de 1.000 resultados,
+# 627 já estavam no acervo de leis ordinárias e a amostra de títulos veio com
+# Resolução e Lei Ordinária misturadas — é view de apanhado, não espécie. Varrê-
+# la seria recolher de novo o que já está aqui, e ela estoura o teto até por
+# ano. Serve para outra coisa: conferir cobertura depois, contando quanto do que
+# ela devolve o acervo já tem.
+NAO_COLETAR = {"geral"}
 
 
 def com_ponto(n: int) -> str:
@@ -68,14 +75,17 @@ def buscar_na_view(a: Alerj, view: str, consulta: str) -> list[tuple[str, str]]:
         data={"Query": consulta, "SearchOrder": "1", "SearchMax": "0"},
     )
     html = _decodifica_bytes(resp.content)
+    # O href **não** termina em `?OpenDocument`: vem com `&amp;Highlight=0,de`
+    # atrás, porque o Domino grifa o termo buscado. Exigir a aspa logo depois
+    # devolvia zero — e zero aqui não parece erro, parece espécie vazia.
     achados = re.findall(
-        r'href="(/contlei\.nsf/[0-9a-f]{32}/([0-9a-f]{32})\?OpenDocument)"', html
+        r'href="(/contlei\.nsf/[0-9a-f]{32}/([0-9a-f]{32})\?OpenDocument[^"]*)"', html
     )
     vistos, saida = set(), []
     for caminho, unid in achados:
         if unid not in vistos:
             vistos.add(unid)
-            saida.append((unid, caminho))
+            saida.append((unid, caminho.split("&")[0]))
     return saida
 
 
@@ -101,6 +111,9 @@ def main() -> None:
         for especie, dados in especies.items():
             if especie == "lei_ordinaria" or not dados.get("view"):
                 continue
+            if especie in NAO_COLETAR:
+                print(f"{especie}: view de apanhado, não se coleta (ver módulo)")
+                continue
             if progresso.get(especie) == "completa":
                 print(f"{especie}: já coletada")
                 continue
@@ -110,18 +123,21 @@ def main() -> None:
             if len(achados) < TETO:
                 print(f"{especie}: consulta ampla devolveu {len(achados)}")
             else:
-                # Estourou o teto: a consulta ampla esconde o resto. Varre por
-                # número, que parte o resultado em pedaços que cabem.
-                print(f"{especie}: ampla no teto ({len(achados)}); varrendo por número")
-                for n in range(1, TOPO.get(especie, 3_000) + 1):
-                    for grafia in {str(n), com_ponto(n)}:
-                        try:
-                            achados.extend(buscar_na_view(a, view, grafia))
-                        except Exception as exc:  # noqa: BLE001
-                            print(f"   {grafia}: {type(exc).__name__}", flush=True)
-                    if n % 200 == 0:
-                        distintos = len({u for u, _ in achados})
-                        print(f"   [{n}] {distintos} distintos", flush=True)
+                # Estourou o teto: a consulta ampla esconde o resto. Parte-se
+                # por **ano**, não por número — medido na resolução: o ano mais
+                # cheio devolve 664, bem abaixo do teto, e são 52 consultas em
+                # vez das 4.800 que a varredura por número custaria.
+                print(f"{especie}: ampla no teto ({len(achados)}); varrendo por ano")
+                for ano in ANOS:
+                    try:
+                        achados.extend(buscar_na_view(a, view, str(ano)))
+                    except Exception as exc:  # noqa: BLE001
+                        print(f"   {ano}: {type(exc).__name__}", flush=True)
+                    if ano % 10 == 0:
+                        print(
+                            f"   [{ano}] {len({u for u, _ in achados})} distintos",
+                            flush=True,
+                        )
 
             novos = 0
             for unid, caminho in achados:
@@ -132,6 +148,14 @@ def main() -> None:
                 f.write(json.dumps(reg, ensure_ascii=False) + "\n")
                 novos += 1
             f.flush()
+            # Zero achados não é espécie vazia: é falha. Já aconteceu — uma
+            # regex estrita demais devolveu zero nas cinco espécies, o passo se
+            # marcou completo em zero segundo e a coleta seguiu como se
+            # estivesse tudo em ordem. Espécie que não acha nada fica pendente,
+            # para a próxima passada tentar de novo.
+            if not achados:
+                print(f"{especie}: NADA ACHADO — fica pendente")
+                continue
             progresso[especie] = "completa"
             PROGRESSO.write_text(json.dumps(progresso, ensure_ascii=False), encoding="utf-8")
             print(f"{especie}: +{novos} atos novos no índice")
