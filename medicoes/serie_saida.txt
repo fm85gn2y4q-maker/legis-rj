@@ -1,0 +1,25 @@
+﻿lendo 12701 documentos…
+  2000/12701
+  4000/12701
+  6000/12701
+  8000/12701
+  10000/12701
+  12000/12701
+
+--- espécie da view × título do documento ---
+ 11123  view=lei_ordinaria          título=Lei Ordinária   <-- confere
+   992  view=resolucao              título=Resolução   <-- confere
+   252  view=decreto_legislativo    título=Decreto Legislativo
+   234  view=lei_complementar       título=Lei Complementar
+   100  view=emenda_constitucional  título=Emenda Constitucional
+
+sem número: 352 | com sufixo de letra: 11
+
+--- buracos na numeração ---
+lei_complementar            232 atos | maior    232 | faltam     0 | repetidos    2
+lei_ordinaria             11076 atos | maior  79428 | faltam 68352 | repetidos   36
+resolucao                   717 atos | maior   2381 | faltam  1664 | repetidos  220
+
+consultas truncadas: 31 | delas ausentes do acervo: 0
+
+gravado em C:\Users\Matheus Menegatti\projetos\legis-rj\medicoes\serie.json

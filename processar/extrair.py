@@ -45,11 +45,33 @@ MESES = {
 
 # O sufixo de letra não é enfeite: a Lei nº 2.803-A/1997 é outra lei que a
 # 2.803/1997, e exigir só dígitos deixava as duas de fora do acervo.
+#
+# O qualificador da espécie fica **entre** o nome e o `nº`: o rótulo é "Emenda
+# Constitucional nº 99/2025" e "Decreto Legislativo nº 03/2025". Exigir o `nº`
+# colado ao nome deixou 352 atos sem número — todas as 100 emendas e todos os
+# 252 decretos legislativos —, e eles sumiram da conferência de série sem
+# aparecer como erro: apenas não constavam.
 RE_NUMERO = re.compile(
-    r"(?:Lei|Lei Complementar|Emenda|Decreto|Resolu[çc][ãa]o)\s*n[ºo°]\s*"
-    r"(\d[\d.]*(?:-[A-Za-z])?)\s*/\s*(\d{4})",
+    r"(?:Lei|Emenda|Decreto|Resolu[çc][ãa]o)"
+    r"(?:\s+(?:Complementar|Constitucional|Legislativ[oa]))?\s*n[ºo°]\s*"
+    r"(\d[\d.]*(?:-[A-Za-z])?)\s*/\s*(\d{2,4})",
     re.IGNORECASE,
 )
+
+
+def ano_de(bruto: str) -> tuple[str, bool]:
+    """Ano do rótulo, e se foi preciso adivinhar o século.
+
+    A Emenda Constitucional nº 01/95 traz o ano com dois dígitos. Como a base
+    começa em 1975 e vai até hoje, dois dígitos ≥ 75 são do século XX e o resto
+    do XXI. A regra é boa até 2075 e **mentira** para qualquer ato anterior a
+    1975 — que não existe aqui. Vai marcado como inferido: quem cita precisa
+    saber que aquele ano não estava escrito.
+    """
+    if len(bruto) == 4:
+        return bruto, False
+    valor = int(bruto)
+    return (f"19{valor:02d}" if valor >= 75 else f"20{valor:02d}"), True
 RE_DATA = re.compile(r"Data d[aeo]\s+\w+\s*(\d{1,2})/(\d{1,2})/(\d{4})", re.IGNORECASE)
 RE_SITUACAO = re.compile(r"Texto d[aeo]\s+\w+\s*\[\s*([^\]]{2,45}?)\s*\]", re.IGNORECASE)
 # "LEI Nº 8.976 DE 17 DE AGOSTO DE 2020." — a linha de abertura do ato.
@@ -117,7 +139,9 @@ def extrair(html: str, unid: str = "") -> dict:
     numero = RE_NUMERO.search(cabecalho)
     if numero:
         registro["numero"] = numero.group(1).replace(".", "")
-        registro["ano"] = numero.group(2)
+        registro["ano"], inferido = ano_de(numero.group(2))
+        if inferido:
+            registro["ano_inferido"] = True
 
     data = RE_DATA.search(cabecalho)
     if data:
@@ -129,7 +153,14 @@ def extrair(html: str, unid: str = "") -> dict:
 
     # A abertura serve de conferência do cabeçalho, não de fonte alternativa:
     # só vale a ocorrência cujo número é o mesmo do cabeçalho.
-    for achado in RE_ABERTURA.finditer(texto[:4000]):
+    #
+    # Quando nenhuma bate, guarda-se o que a primeira dizia. Foi assim que
+    # apareceu a Lei 9.428/2021: o campo do cabeçalho traz **79428** e o texto
+    # do ato traz 9.428. Erro de digitação da ALERJ, e sem esta marca o acervo
+    # guardaria a lei sob um número que não existe — invisível para quem a
+    # procurasse pelo número certo.
+    candidatos = list(RE_ABERTURA.finditer(texto[:4000]))
+    for achado in candidatos:
         if achado.group(2).replace(".", "") != registro.get("numero"):
             continue
         mes = MESES.get(achado.group(4).lower())
@@ -154,6 +185,19 @@ def extrair(html: str, unid: str = "") -> dict:
     # não tem. Confrontar com o Diário Oficial resolve caso a caso, e o acervo
     # do DOERJ já está aqui para isso.
     abertura = registro.get("abertura")
+    if not abertura and candidatos and registro.get("numero"):
+        primeiro = candidatos[0].group(2).replace(".", "")
+        # Só é divergência se o número do texto for plausivelmente o mesmo ato:
+        # a abertura de uma lei que ALTERA outra cita o número da alterada, e
+        # isso não é erro de ninguém. O sinal de erro é o cabeçalho conter o
+        # número do texto com dígito a mais ou a menos.
+        cabecalho_num = registro["numero"]
+        if primeiro in cabecalho_num or cabecalho_num in primeiro:
+            registro["numero_divergente"] = {
+                "cabecalho": cabecalho_num,
+                "texto_do_ato": primeiro,
+            }
+
     if abertura and abertura.get("data") and registro.get("data"):
         if abertura["data"] != registro["data"]:
             registro["data_divergente"] = {
