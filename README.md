@@ -121,6 +121,29 @@ Duas coisas que a coleta descobriu e que valem por si:
   conferência de série: número que devia existir e não apareceu volta para a
   busca combinado com o ano.
 
+## O servidor
+
+```bash
+.venv\Scripts\python.exe testar_servidor.py
+```
+
+Registrado no Claude Desktop como `legis-rj`. Seis ferramentas, e a central é
+`verificar_vigencia`, que responde **nos dois níveis**: a situação do ato e as
+anotações por dispositivo, separadas.
+
+Três decisões que valem mais que o código:
+
+- **A situação carrega a origem.** "Em Vigor declarado no documento" e "lido da
+  listagem" não são a mesma prova, e para decreto legislativo e resolução a
+  ALERJ não declara nada — o servidor diz isso, em vez de devolver campo vazio,
+  que se lê como norma viva.
+- **Divergência da fonte não vira escolha.** Quando a ALERJ registra dois
+  números para o mesmo ato, a ressalva vai **colada ao número na citação** —
+  aviso em campo separado não sobrevive ao copiar e colar. E o ato é
+  encontrável pelos dois números.
+- **A ferramenta prova o que encontrou.** Nenhuma resposta afirma que uma norma
+  está em vigor; afirma o que a fonte declarou.
+
 ## Próximo passo
 
 Terminadas as varreduras: conferir a série da ALERJ, extrair os atos do texto
