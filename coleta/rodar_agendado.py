@@ -18,7 +18,8 @@ desligada no meio da coleta não deixa o acervo travado para sempre.
 ORDEM DAS ETAPAS
 
 1. ALERJ, que é a que falta terminar.
-2. Enxugar o DOERJ, que libera disco e confere links.
+2. Remontar o banco, se o disco tiver documento que ele não conhece.
+3. Enxugar o DOERJ, que libera disco e confere links.
 
 Cada etapa é isolada: uma falhando, a seguinte roda. O log fica em
 `dados/agendado.log`.
@@ -124,6 +125,28 @@ def alerj(coletar_alerj) -> None:
     coletar_alerj.fase_b(a, coletar_alerj.carregar_indice())
 
 
+def remontar_se_preciso() -> None:
+    """Remonta o banco quando o disco tem documento que ele não conhece.
+
+    Sem isto o banco envelhece **calado**: a coleta avança, o servidor continua
+    respondendo normalmente, e a única pista de que ele parou de conhecer os
+    atos novos é alguém conferir à mão. Foi o que aconteceu — dez dias parado
+    em 13.463 atos enquanto o disco chegava a 22.755 documentos.
+
+    A remontagem lê tudo de novo e leva perto de meia hora. Só vale a pena
+    quando há o que acrescentar, e é por isso que a contagem fica gravada.
+    """
+    sys.path.insert(0, str(RAIZ / "processar"))
+    import montar_banco
+
+    precisa, em_disco, no_banco = montar_banco.precisa_remontar()
+    if not precisa:
+        anota(f"banco em dia com {no_banco} documentos")
+        return
+    anota(f"banco tem {no_banco} documentos, disco tem {em_disco}; remontando")
+    montar_banco.main()
+
+
 def marcar_alerj_concluida() -> None:
     """Deixa em disco o aviso de que a ALERJ fechou.
 
@@ -200,6 +223,7 @@ def main() -> None:
         # servidor, e ele já derruba conexão com uma só.
         etapa("ALERJ — demais espécies", coletar_especies.main)
         marcar_alerj_concluida()
+        etapa("banco", remontar_se_preciso)
         etapa("enxugar DOERJ", enxugar_doerj.main)
         anota("nada mais pendente nesta passada")
     finally:

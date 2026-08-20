@@ -143,9 +143,15 @@ def numero_ordenavel(numero: str | None) -> int | None:
 
 
 def main() -> None:
-    if BANCO.exists():
-        BANCO.unlink()
-    con = sqlite3.connect(BANCO)
+    # Monta num arquivo à parte e só troca no fim. Apagar o banco antes de
+    # construir deixa o servidor sem acervo durante toda a montagem — e se a
+    # montagem morrer no meio, sem acervo nenhum. Aconteceu: um processo em
+    # segundo plano foi morto junto com o terminal e o que sobrou foi um banco
+    # de zero atos, respondendo normalmente.
+    parcial = BANCO.with_suffix(".sqlite.parcial")
+    if parcial.exists():
+        parcial.unlink()
+    con = sqlite3.connect(parcial)
     con.executescript(ESQUEMA)
 
     lista = listagens()
@@ -225,7 +231,45 @@ def main() -> None:
     ):
         print(f"  {linha[2]:>6}  {linha[0]:<24} situação: {linha[1]}")
     con.close()
+    if BANCO.exists():
+        BANCO.unlink()
+    parcial.rename(BANCO)
+    print(f"banco trocado: {BANCO}")
 
 
 if __name__ == "__main__":
     main()
+
+
+def registrar_construcao(documentos: int) -> None:
+    """Deixa em disco de quantos documentos este banco foi feito.
+
+    Sem isso o banco envelhece calado: a coleta avança, o servidor continua
+    respondendo normalmente, e ninguém percebe que ele parou de conhecer os
+    atos novos. Aconteceu — o banco ficou dez dias parado em 13.463 atos
+    enquanto o disco chegava a 22.755 documentos, e a única pista era eu
+    conferir à mão.
+    """
+    import time
+
+    (ALERJ / "banco_construido.json").write_text(
+        json.dumps(
+            {
+                "documentos": documentos,
+                "em": time.strftime("%Y-%m-%d %H:%M:%S"),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def precisa_remontar() -> tuple[bool, int, int]:
+    """(precisa, documentos em disco, documentos do banco atual)."""
+    em_disco = sum(1 for _ in DOCS.glob("*.html"))
+    marca = ALERJ / "banco_construido.json"
+    if not BANCO.exists() or not marca.exists():
+        return True, em_disco, 0
+    construido = json.loads(marca.read_text("utf-8")).get("documentos", 0)
+    return em_disco != construido, em_disco, construido
