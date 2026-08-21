@@ -1,0 +1,24 @@
+22755 documentos
+  2000/22755
+  4000/22755
+  6000/22755
+  8000/22755
+  10000/22755
+  12000/22755
+  14000/22755
+  16000/22755
+  18000/22755
+  20000/22755
+  22000/22755
+construindo os índices de busca…
+
+22755 atos gravados em C:\Users\Matheus Menegatti\projetos\legis-rj\dados\legis-rj.sqlite
+   11078  lei_ordinaria            situação: documento
+    6632  resolucao                situação: documento
+    4414  resolucao                situação: ausente
+     252  decreto_legislativo      situação: ausente
+     206  lei_complementar         situação: listagem
+      99  emenda_constitucional    situação: listagem
+      45  lei_ordinaria            situação: listagem
+      28  lei_complementar         situação: ausente
+       1  emenda_constitucional    situação: ausente
