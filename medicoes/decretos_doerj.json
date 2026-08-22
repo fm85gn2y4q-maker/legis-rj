@@ -1,0 +1,116 @@
+{
+  "edicoes_lidas": 4454,
+  "numeros_distintos": 7940,
+  "ocorrencias": 8343,
+  "sem_numero": 7579,
+  "por_ano": {
+    "1976": 1,
+    "1985": 1,
+    "2001": 1,
+    "2002": 2,
+    "2003": 1,
+    "2007": 1,
+    "2008": 378,
+    "2009": 589,
+    "2010": 537,
+    "2011": 578,
+    "2012": 615,
+    "2013": 509,
+    "2014": 552,
+    "2015": 400,
+    "2016": 314,
+    "2017": 300,
+    "2018": 329,
+    "2019": 309,
+    "2020": 367,
+    "2021": 361,
+    "2022": 290,
+    "2023": 496,
+    "2024": 524,
+    "2025": 574,
+    "2026": 314
+  },
+  "repetidos": 360,
+  "rotulos": [
+    [
+      "DECRETO N",
+      8640
+    ],
+    [
+      "DECRETO DE",
+      6076
+    ],
+    [
+      "DECRETOS DE",
+      2909
+    ],
+    [
+      "DECRETO",
+      589
+    ],
+    [
+      "DECRETO DECRETO",
+      115
+    ],
+    [
+      "DECRETO-LEI",
+      56
+    ],
+    [
+      "DECRETO ESTADUAL",
+      56
+    ],
+    [
+      "DECRETO LEI",
+      43
+    ],
+    [
+      "DECRETO COLETIVO",
+      35
+    ],
+    [
+      "DECRETOS",
+      14
+    ],
+    [
+      "DECRETO FEDERAL",
+      11
+    ],
+    [
+      "DECRETO C",
+      2
+    ],
+    [
+      "DECRETO A",
+      2
+    ],
+    [
+      "DECRETO MINISTERIAL",
+      2
+    ],
+    [
+      "DECRETO F",
+      2
+    ],
+    [
+      "DECRETO CONJUNTO",
+      2
+    ],
+    [
+      "DECRETOSDE",
+      1
+    ],
+    [
+      "DECRETON",
+      1
+    ],
+    [
+      "DECRETO DA",
+      1
+    ],
+    [
+      "DECRETO EMENDA",
+      1
+    ]
+  ]
+}
