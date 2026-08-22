@@ -1,0 +1,71 @@
+"""Junta tudo o que já se extraiu de decreto e diz o que ainda falta.
+
+Três origens, e elas se acumulam:
+
+    decretos.jsonl          a varredura das 4.454 edições do calendário
+    extras/*.txt            os cadernos baixados pela busca por matéria
+    cadernos/*.txt          os cadernos alcançados pela recuperação por data
+
+Aqui elas viram uma lista só, e dela sai o que ainda falta na série — que é o
+insumo da próxima rodada de recuperação.
+"""
+
+from __future__ import annotations
+
+import json
+import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+
+import extrair_decretos  # noqa: E402
+
+RAIZ = pathlib.Path(__file__).resolve().parent.parent
+DOERJ = RAIZ / "dados" / "doerj"
+CONSOLIDADO = DOERJ / "decretos_todos.jsonl"
+FALTAM = DOERJ / "decretos_faltantes.json"
+
+
+def main() -> None:
+    por_numero: dict[str, list[dict]] = {}
+
+    def guardar(reg: dict) -> None:
+        por_numero.setdefault(reg["numero"], []).append(reg)
+
+    for linha in (DOERJ / "decretos.jsonl").read_text("utf-8").splitlines():
+        if linha.strip():
+            guardar(json.loads(linha))
+    do_calendario = sum(len(v) for v in por_numero.values())
+    print(f"da varredura do calendário: {do_calendario}")
+
+    for pasta in ("extras", "cadernos"):
+        caminho = DOERJ / pasta
+        if not caminho.exists():
+            continue
+        antes = sum(len(v) for v in por_numero.values())
+        for txt in sorted(caminho.glob("*.txt")):
+            texto = txt.read_text(encoding="utf-8", errors="replace")
+            dia = txt.stem[:10]
+            for decreto in extrair_decretos.extrair_da_edicao(texto, dia):
+                decreto["origem"] = pasta
+                guardar(decreto)
+        print(f"de {pasta}: +{sum(len(v) for v in por_numero.values()) - antes}")
+
+    with CONSOLIDADO.open("w", encoding="utf-8") as f:
+        for ocorrencias in por_numero.values():
+            for reg in ocorrencias:
+                f.write(json.dumps(reg, ensure_ascii=False) + "\n")
+
+    numeros = {int(n) for n in por_numero if n.isdigit() and int(n) < 60000}
+    inicio, fim = 42200, max(numeros)
+    faltam = [n for n in range(inicio, fim + 1) if n not in numeros]
+    FALTAM.write_text(json.dumps(faltam), encoding="utf-8")
+
+    print(f"\nnúmeros distintos: {len(numeros)}")
+    print(f"série {inicio}–{fim}: faltam {len(faltam)} "
+          f"({100 * len(faltam) / (fim - inicio + 1):.1f}%)")
+    print(f"lista em {FALTAM}")
+
+
+if __name__ == "__main__":
+    main()

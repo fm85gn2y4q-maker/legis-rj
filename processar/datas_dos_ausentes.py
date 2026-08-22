@@ -1,7 +1,7 @@
 """Descobre a data de publicação dos decretos ausentes — pelas citações.
 
-O acervo não tem a publicação original destes 224 decretos, mas tem milhares
-de atos que os citam, e a citação administrativa traz a data por extenso:
+O acervo não tem a publicação original destes decretos, mas tem milhares de
+atos que os citam, e a citação administrativa traz a data por extenso:
 
     "em conformidade com o Art. 1º, do Decreto nº 44.251, de 17 de junho de 2013"
 
@@ -40,7 +40,7 @@ NUMERICA = re.compile(
 
 
 def main() -> None:
-    ausentes = set(json.loads((DOERJ / "decretos_sem_materia.json").read_text("utf-8")))
+    ausentes = set(json.loads((DOERJ / "decretos_faltantes.json").read_text("utf-8")))
     datas: dict[int, collections.Counter] = collections.defaultdict(collections.Counter)
 
     arquivos = sorted(DOERJ.glob("*.txt"))

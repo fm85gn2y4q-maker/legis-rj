@@ -72,7 +72,10 @@ def _data(bruto: str | None):
 def datas_conhecidas() -> dict[int, date]:
     """Número → data, do que já foi extraído. É o que cerca os ausentes."""
     mapa: dict[int, date] = {}
-    for linha in (DOERJ / "decretos.jsonl").read_text("utf-8").splitlines():
+    fonte = DOERJ / "decretos_todos.jsonl"
+    if not fonte.exists():
+        fonte = DOERJ / "decretos.jsonl"
+    for linha in fonte.read_text("utf-8").splitlines():
         if not linha.strip():
             continue
         reg = json.loads(linha)
@@ -124,7 +127,8 @@ def texto_do_caderno(io: Ioerj, href: str, apelido: str) -> str | None:
 
 def main() -> None:
     conhecidas = datas_conhecidas()
-    ausentes = json.loads((DOERJ / "decretos_sem_materia.json").read_text("utf-8"))
+    citacoes = json.loads(DATAS.read_text("utf-8")) if DATAS.exists() else {}
+    ausentes = json.loads((DOERJ / "decretos_faltantes.json").read_text("utf-8"))
     tentados = json.loads(TENTADOS.read_text("utf-8")) if TENTADOS.exists() else {}
     io = Ioerj(pausa=1.2)
 
@@ -134,7 +138,17 @@ def main() -> None:
 
     with RESULTADO.open("a", encoding="utf-8") as saida:
         for i, numero in enumerate(pendentes, 1):
-            dias = janela_do_ausente(int(numero), conhecidas)
+            # A data da citação, quando existe, é mais precisa que o cerco:
+            # aponta o dia da assinatura em vez de um intervalo. Vale como
+            # janela curta, e o cerco entra quando ela falta.
+            citada = citacoes.get(numero, {}).get("data")
+            if citada:
+                dias = [
+                    (date.fromisoformat(citada) + timedelta(days=n)).isoformat()
+                    for n in range(FOLGA + 1)
+                ]
+            else:
+                dias = janela_do_ausente(int(numero), conhecidas)
             registro = {"numero": numero, "janela": [dias[0], dias[-1]] if dias else []}
             encontrado = None
 

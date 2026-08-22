@@ -126,7 +126,12 @@ def baixar_e_extrair(io: Ioerj) -> None:
             txt = pdf.with_suffix(".txt")
             try:
                 if not txt.exists():
-                    pdf.write_bytes(io.pdf_da_edicao(dados["href"]))
+                    # O PDF pode já estar aqui de uma passada que baixou e não
+                    # conseguiu converter — foi o que aconteceu com 674 edições
+                    # quando o pdftotext não estava no PATH. Baixar de novo
+                    # seriam 2,5 GB jogados fora.
+                    if not pdf.exists():
+                        pdf.write_bytes(io.pdf_da_edicao(dados["href"]))
                     subprocess.run(
                         [PDFTOTEXT, "-enc", "UTF-8", str(pdf), str(txt)],
                         check=True, capture_output=True, timeout=900,

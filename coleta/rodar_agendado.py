@@ -134,6 +134,16 @@ def decretos_faltantes_se_houver() -> None:
     10/01/2023, que o calendário não lista. A conferência de série achou 1.220
     ausentes assim.
 
+    O caminho mudou depois de medido. Buscar a matéria pelo número parecia
+    natural e rendeu 20%: o filtro aceitava qualquer matéria do tipo "Decreto
+    Normativo", e uma matéria assim que **cita** outro decreto passa igual —
+    a mesma armadilha de cabeçalho e citação terem a mesma forma, agora no
+    metadado. Baixava-se a edição errada em 80% das vezes.
+
+    Agora vai pela data: a da citação, que a própria citação enganosa fornece
+    ("regulamentada pelo Decreto nº 42.262, de 26/01/2010"), ou o cerco dos
+    vizinhos, já que a numeração é cronológica.
+
     Roda aqui, e não à mão numa conversa, porque à mão morre junto com a
     sessão. E entra depois da ALERJ pelo mesmo motivo de sempre: os dois batem
     no mesmo servidor.
@@ -144,13 +154,11 @@ def decretos_faltantes_se_houver() -> None:
     if not faltantes.exists():
         return
     sys.path.insert(0, str(RAIZ / "processar"))
-    import decretos_faltantes
+    import recuperar_decretos
 
     numeros = json.loads(faltantes.read_text("utf-8"))
-    achados = decretos_faltantes.ja_localizados()
-    if len(achados) >= len(numeros):
-        anota(f"decretos: {len(achados)} localizados; baixando o que falta")
-    decretos_faltantes.main()
+    anota(f"decretos: {len(numeros)} ainda ausentes da série")
+    recuperar_decretos.main()
 
 
 def remontar_se_preciso() -> None:
