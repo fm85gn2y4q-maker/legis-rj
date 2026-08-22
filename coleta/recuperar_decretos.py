@@ -145,12 +145,19 @@ def main() -> None:
     tentados = json.loads(TENTADOS.read_text("utf-8")) if TENTADOS.exists() else {}
     io = Ioerj(pausa=1.2)
 
+    ausentes_restantes = {str(n) for n in ausentes}
+    de_brinde: set[str] = set()
     pendentes = [str(n) for n in ausentes if str(n) not in tentados]
     print(f"recuperar: {len(pendentes)} de {len(ausentes)}")
     achados = 0
 
     with RESULTADO.open("a", encoding="utf-8") as saida:
         for i, numero in enumerate(pendentes, 1):
+            if numero in de_brinde:
+                # Já veio num caderno aberto para outro decreto.
+                tentados[numero] = {"numero": numero, "encontrado": "de brinde"}
+                achados += 1
+                continue
             # A data da citação, quando existe, é mais precisa que o cerco:
             # aponta o dia da assinatura em vez de um intervalo. Vale como
             # janela curta, e o cerco entra quando ela falta.
@@ -182,13 +189,22 @@ def main() -> None:
                     texto = texto_do_caderno(io, materia.href_publicacao, apelido)
                     if not texto:
                         continue
+                    # Um caderno traz vários decretos. Guardar só o
+                    # procurado joga fora os vizinhos que também faltam — e
+                    # eles quase sempre estão ali, porque a numeração é
+                    # cronológica e o caderno é de um único dia. Aproveitar
+                    # todos evita rebaixar o mesmo arquivo mais adiante.
                     for decreto in extrair_decretos.extrair_da_edicao(texto, dia):
+                        if decreto["numero"] not in ausentes_restantes:
+                            continue
+                        decreto["recuperado_de"] = apelido
+                        saida.write(json.dumps(decreto, ensure_ascii=False) + chr(10))
+                        ausentes_restantes.discard(decreto["numero"])
+                        de_brinde.add(decreto["numero"])
                         if decreto["numero"] == numero:
-                            decreto["recuperado_de"] = apelido
-                            saida.write(json.dumps(decreto, ensure_ascii=False) + "\n")
                             encontrado = apelido
-                            break
                     if encontrado:
+                        break
                         break
                 if encontrado:
                     break
@@ -202,7 +218,8 @@ def main() -> None:
                 TENTADOS.write_text(
                     json.dumps(tentados, ensure_ascii=False), encoding="utf-8"
                 )
-                print(f"  [{i}/{len(pendentes)}] recuperados {achados}", flush=True)
+                print(f"  [{i}/{len(pendentes)}] recuperados {achados} "
+                      f"(de brinde: {len(de_brinde)})", flush=True)
 
     TENTADOS.write_text(json.dumps(tentados, ensure_ascii=False), encoding="utf-8")
     print(f"\nrecuperados {achados} de {len(pendentes)}")

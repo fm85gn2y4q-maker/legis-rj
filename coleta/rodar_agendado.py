@@ -262,6 +262,16 @@ def main() -> None:
         etapa("decretos que faltam", decretos_faltantes_se_houver)
         etapa("banco", remontar_se_preciso)
         etapa("enxugar DOERJ", enxugar_doerj.main)
+        import resumo
+
+        retrato = resumo.gravar()
+        anota(
+            "retrato: {} decretos, {} recuperados, {}% de acerto".format(
+                retrato["doerj"]["decretos_extraidos"],
+                retrato["doerj"]["recuperados"],
+                retrato["recuperacao"]["taxa"],
+            )
+        )
         anota("nada mais pendente nesta passada")
     finally:
         if TRAVA.exists() and TRAVA.read_text("utf-8").strip() == str(os.getpid()):
