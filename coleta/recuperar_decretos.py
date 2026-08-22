@@ -61,6 +61,19 @@ FOLGA = 3  # dias além do cerco: o ato sai publicado depois de assinado
 MATERIAS_POR_DIA = 4  # cadernos distintos que se tenta alcançar por dia
 JANELA_MAXIMA = 12  # além disso o cerco não ajuda e o custo explode
 
+# O campo de busca exige três caracteres: "de" é recusado e devolve zero, o que
+# se lê como "não há matéria naquele dia". Já custou uma coleta inteira — vinte
+# decretos procurados, nenhum caderno baixado, nenhum erro no log.
+SONDAS = ("estado", "secretaria", "rio de janeiro")
+
+
+def materias_do_dia(io: Ioerj, dia: str, mes: str, ano: str) -> list:
+    for termo in SONDAS:
+        materias, _ = io.buscar(termo, jornal=PARTE_EXECUTIVO, dia=dia, mes=mes, ano=ano)
+        if materias:
+            return materias
+    return []
+
 
 def _data(bruto: str | None):
     try:
@@ -133,7 +146,7 @@ def main() -> None:
     io = Ioerj(pausa=1.2)
 
     pendentes = [str(n) for n in ausentes if str(n) not in tentados]
-    print(f"recuperar: {len(pendentes)} de {len(alvos)}")
+    print(f"recuperar: {len(pendentes)} de {len(ausentes)}")
     achados = 0
 
     with RESULTADO.open("a", encoding="utf-8") as saida:
@@ -155,9 +168,7 @@ def main() -> None:
             for dia in dias:
                 ano, mes, d = dia.split("-")
                 try:
-                    materias, _ = io.buscar(
-                        "de", jornal=PARTE_EXECUTIVO, dia=d, mes=mes, ano=ano
-                    )
+                    materias = materias_do_dia(io, d, mes, ano)
                 except Exception as exc:  # noqa: BLE001
                     registro.setdefault("erros", []).append(f"{dia}: {exc}"[:80])
                     continue
