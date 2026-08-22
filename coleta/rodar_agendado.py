@@ -173,13 +173,19 @@ def remontar_se_preciso() -> None:
     quando há o que acrescentar, e é por isso que a contagem fica gravada.
     """
     sys.path.insert(0, str(RAIZ / "processar"))
+    import consolidar_decretos
     import montar_banco
 
-    precisa, em_disco, no_banco = montar_banco.precisa_remontar()
+    # Consolidar antes de comparar: é o que junta a varredura, os cadernos das
+    # extras e a recuperação num arquivo só. Sem isso o banco não enxerga nada
+    # do que a recuperação trouxe.
+    consolidar_decretos.main()
+
+    precisa, agora, no_banco = montar_banco.precisa_remontar()
     if not precisa:
-        anota(f"banco em dia com {no_banco} documentos")
+        anota(f"banco em dia: {agora}")
         return
-    anota(f"banco tem {no_banco} documentos, disco tem {em_disco}; remontando")
+    anota(f"banco reflete {no_banco}, disco tem {agora}; remontando")
     montar_banco.main()
 
 

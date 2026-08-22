@@ -179,6 +179,7 @@ class Acervo:
                 "data": divergentes[0],
                 "numero": divergentes[1],
             },
+            "lacuna_na_serie_de_decretos": self._lacuna(),
             "republicacoes_de_decreto": self.con.execute(
                 "SELECT COUNT(*) FROM ato WHERE republicacoes IS NOT NULL"
             ).fetchone()[0],
@@ -191,6 +192,30 @@ class Acervo:
                 "Revogação tácita, e norma federal superveniente.",
             ],
         }
+
+    def _lacuna(self) -> dict | None:
+        """O que falta na série de decretos — e o que se sabe sobre o que falta.
+
+        Um acervo jurídico não pode deixar "não encontrei" passar por "não
+        existe". Aqui a diferença é medida: parte dos decretos ausentes é
+        **comprovadamente existente**, porque outros atos os citam — e o mais
+        citado aparece 13.754 vezes, sustentando milhares de despachos.
+
+        Quem responder sobre um decreto que não está aqui precisa dizer qual
+        dos dois casos é.
+        """
+        arquivo = self.caminho.parent / "doerj" / "lacuna.json"
+        if not arquivo.exists():
+            return None
+        dados = json.loads(arquivo.read_text("utf-8"))
+        dados["como_ler"] = (
+            "Ausente aqui não é inexistente: dos que faltam, "
+            f"{dados.get('ausentes_com_existencia_comprovada', 0)} são citados por "
+            "outros atos do próprio Diário, o que prova que foram publicados. "
+            "A publicação original deles não está indexada na busca da Imprensa "
+            "Oficial nem nos cadernos alcançáveis pelo calendário."
+        )
+        return dados
 
     # --------------------------------------------------------------- buscas
 

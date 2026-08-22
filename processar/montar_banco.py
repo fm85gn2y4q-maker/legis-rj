@@ -148,6 +148,11 @@ def numero_ordenavel(numero: str | None) -> int | None:
     return int(digitos) if digitos else None
 
 
+# O consolidado junta a varredura do calendário, os cadernos das edições
+# extras e o que a recuperação por data trouxe. Ler o arquivo da varredura
+# sozinho deixaria de fora tudo o que foi recuperado — e sem erro nenhum: o
+# banco ficaria menor e ninguém notaria.
+DECRETOS_CONSOLIDADO = RAIZ / "dados" / "doerj" / "decretos_todos.jsonl"
 DECRETOS = RAIZ / "dados" / "doerj" / "decretos.jsonl"
 EDICOES = RAIZ / "dados" / "doerj" / "edicoes.jsonl"
 CORPO_SUSPEITO = 300
@@ -173,7 +178,8 @@ def carregar_decretos(con: sqlite3.Connection) -> int:
     responde precisa dizer que houve republicação, porque a versão que o
     advogado leu pode ser a de antes.
     """
-    if not DECRETOS.exists():
+    fonte = DECRETOS_CONSOLIDADO if DECRETOS_CONSOLIDADO.exists() else DECRETOS
+    if not fonte.exists():
         return 0
 
     edicoes = {}
@@ -184,7 +190,7 @@ def carregar_decretos(con: sqlite3.Connection) -> int:
                 edicoes[reg["data"]] = reg.get("link", "")
 
     por_numero: dict[str, list[dict]] = {}
-    for linha in DECRETOS.read_text("utf-8").splitlines():
+    for linha in fonte.read_text("utf-8").splitlines():
         if linha.strip():
             reg = json.loads(linha)
             por_numero.setdefault(reg["numero"], []).append(reg)
@@ -349,6 +355,23 @@ if __name__ == "__main__":
     main()
 
 
+def _impressao_digital() -> dict:
+    """O que o banco precisa refletir: documentos da ALERJ e registros de decreto.
+
+    Comparar só os documentos da ALERJ deixava a remontagem cega para a
+    recuperação de decretos — ela poderia trazer 500 atos novos e o banco
+    continuaria "em dia", porque a contagem que ele vigiava não tinha mudado.
+    """
+    fonte = DECRETOS_CONSOLIDADO if DECRETOS_CONSOLIDADO.exists() else DECRETOS
+    decretos = 0
+    if fonte.exists():
+        decretos = sum(1 for l in fonte.read_text("utf-8").splitlines() if l.strip())
+    return {
+        "documentos": sum(1 for _ in DOCS.glob("*.html")),
+        "registros_de_decreto": decretos,
+    }
+
+
 def registrar_construcao(documentos: int) -> None:
     """Deixa em disco de quantos documentos este banco foi feito.
 
@@ -363,7 +386,7 @@ def registrar_construcao(documentos: int) -> None:
     (ALERJ / "banco_construido.json").write_text(
         json.dumps(
             {
-                "documentos": documentos,
+                **_impressao_digital(),
                 "em": time.strftime("%Y-%m-%d %H:%M:%S"),
             },
             ensure_ascii=False,
@@ -373,11 +396,12 @@ def registrar_construcao(documentos: int) -> None:
     )
 
 
-def precisa_remontar() -> tuple[bool, int, int]:
-    """(precisa, documentos em disco, documentos do banco atual)."""
-    em_disco = sum(1 for _ in DOCS.glob("*.html"))
+def precisa_remontar() -> tuple[bool, dict, dict]:
+    """(precisa, o que há em disco, o que o banco reflete)."""
+    agora = _impressao_digital()
     marca = ALERJ / "banco_construido.json"
     if not BANCO.exists() or not marca.exists():
-        return True, em_disco, 0
-    construido = json.loads(marca.read_text("utf-8")).get("documentos", 0)
-    return em_disco != construido, em_disco, construido
+        return True, agora, {}
+    construido = json.loads(marca.read_text("utf-8"))
+    igual = all(construido.get(k) == v for k, v in agora.items())
+    return not igual, agora, construido

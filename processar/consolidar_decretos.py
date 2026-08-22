@@ -61,6 +61,36 @@ def main() -> None:
     faltam = [n for n in range(inicio, fim + 1) if n not in numeros]
     FALTAM.write_text(json.dumps(faltam), encoding="utf-8")
 
+    # A lacuna vai para o servidor declarar. Não basta dizer "não achei": o
+    # acervo sabe que 224 dos ausentes EXISTEM, porque outros atos os citam —
+    # um deles 13.754 vezes. Dizer "não encontrei" sobre um decreto que sustenta
+    # milhares de despachos é diferente de dizer "não existe", e a diferença é
+    # justamente o que um acervo jurídico não pode confundir.
+    citados = {}
+    prova = RAIZ / "medicoes" / "ausentes_citados.json"
+    if prova.exists():
+        citados = json.loads(prova.read_text("utf-8")).get("detalhe", {})
+    comprovados = [n for n in faltam if str(n) in citados]
+    (DOERJ / "lacuna.json").write_text(
+        json.dumps(
+            {
+                "serie": f"{inicio}-{fim}",
+                "numeros_na_serie": fim - inicio + 1,
+                "no_acervo": (fim - inicio + 1) - len(faltam),
+                "ausentes": len(faltam),
+                "ausentes_com_existencia_comprovada": len(comprovados),
+                "mais_citados": sorted(
+                    ((n, citados[str(n)]) for n in comprovados),
+                    key=lambda x: -x[1],
+                )[:10],
+                "atualizado_em": __import__("time").strftime("%Y-%m-%d %H:%M:%S"),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
     print(f"\nnúmeros distintos: {len(numeros)}")
     print(f"série {inicio}–{fim}: faltam {len(faltam)} "
           f"({100 * len(faltam) / (fim - inicio + 1):.1f}%)")
