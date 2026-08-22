@@ -61,11 +61,17 @@ CREATE TABLE ato (
     chars             INTEGER,
     ano_inferido      INTEGER DEFAULT 0,
     numero_divergente TEXT,            -- JSON com os dois números
-    data_divergente   TEXT             -- JSON com as duas datas
+    data_divergente   TEXT,            -- JSON com as duas datas
+    fonte             TEXT NOT NULL DEFAULT 'ALERJ',   -- ALERJ | DOERJ
+    publicado_em      TEXT,            -- data da edição do Diário
+    pagina            INTEGER,
+    republicacoes     TEXT,            -- JSON com as outras datas de publicação
+    truncado          INTEGER DEFAULT 0
 );
 CREATE INDEX ato_por_numero ON ato (especie, numero_ordenavel, ano);
 CREATE INDEX ato_por_ano ON ato (ano);
 CREATE INDEX ato_por_situacao ON ato (situacao);
+CREATE INDEX ato_por_fonte ON ato (fonte);
 
 -- Anotação de dispositivo: a revogação e a inconstitucionalidade que NÃO
 -- sobem para o cabeçalho. É o segundo nível de vigência, e é onde o erro
@@ -142,6 +148,101 @@ def numero_ordenavel(numero: str | None) -> int | None:
     return int(digitos) if digitos else None
 
 
+DECRETOS = RAIZ / "dados" / "doerj" / "decretos.jsonl"
+EDICOES = RAIZ / "dados" / "doerj" / "edicoes.jsonl"
+CORPO_SUSPEITO = 300
+
+
+def carregar_decretos(con: sqlite3.Connection) -> int:
+    """Os decretos do Executivo, extraídos do texto do Diário Oficial.
+
+    Entram na mesma tabela dos atos da ALERJ, com `fonte='DOERJ'` — e a
+    diferença entre as duas fontes é de natureza, não de origem:
+
+        ALERJ    declara situação; o acervo sabe se a norma foi revogada
+        DOERJ    publica e segue; não há situação nenhuma, só a redação do dia
+
+    Por isso todo decreto entra com `situacao_origem='ausente'`. Silêncio aqui
+    não é "em vigor": é o Diário não ter essa informação para dar.
+
+    REPUBLICAÇÃO É A REGRA DESTA FONTE
+
+    345 números saem em mais de uma edição. O Estado publica com incorreção e
+    republica dias depois, e nada no texto da primeira avisa. Fica gravada a
+    **última** publicação, com a lista das anteriores no registro — quem
+    responde precisa dizer que houve republicação, porque a versão que o
+    advogado leu pode ser a de antes.
+    """
+    if not DECRETOS.exists():
+        return 0
+
+    edicoes = {}
+    if EDICOES.exists():
+        for linha in EDICOES.read_text("utf-8").splitlines():
+            if linha.strip():
+                reg = json.loads(linha)
+                edicoes[reg["data"]] = reg.get("link", "")
+
+    por_numero: dict[str, list[dict]] = {}
+    for linha in DECRETOS.read_text("utf-8").splitlines():
+        if linha.strip():
+            reg = json.loads(linha)
+            por_numero.setdefault(reg["numero"], []).append(reg)
+
+    gravados = 0
+    for numero, ocorrencias in por_numero.items():
+        ocorrencias.sort(key=lambda r: r["data_publicacao"])
+        # A última publicação manda; se ela vier truncada e houver uma inteira
+        # antes, fica a inteira — o critério é ter texto, não ser recente.
+        atual = ocorrencias[-1]
+        if atual["chars"] < CORPO_SUSPEITO:
+            inteiras = [o for o in ocorrencias if o["chars"] >= CORPO_SUSPEITO]
+            if inteiras:
+                atual = inteiras[-1]
+        anteriores = [
+            o["data_publicacao"] for o in ocorrencias if o is not atual
+        ]
+        unid = f"doerj:{numero}:{atual['data_publicacao']}"
+        link = edicoes.get(atual["data_publicacao"], "")
+        if link and atual.get("pagina"):
+            link = f"{link}#page={atual['pagina']}"
+
+        con.execute(
+            "INSERT OR REPLACE INTO ato VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                unid,
+                "decreto_executivo",
+                numero,
+                int(numero) if numero.isdigit() else None,
+                (atual.get("data") or "")[:4] or None,
+                atual.get("data"),
+                None,
+                "ausente",
+                atual.get("ementa"),
+                None,
+                link,
+                atual.get("chars"),
+                0,
+                None,
+                None,
+                "DOERJ",
+                atual["data_publicacao"],
+                atual.get("pagina"),
+                json.dumps(anteriores, ensure_ascii=False) if anteriores else None,
+                1 if atual["chars"] < CORPO_SUSPEITO else 0,
+            ),
+        )
+        con.execute(
+            "INSERT OR REPLACE INTO texto VALUES (?,?)", (unid, atual["texto"])
+        )
+        gravados += 1
+        if gravados % 2000 == 0:
+            con.commit()
+            print(f"  decretos: {gravados}", flush=True)
+    print(f"  {gravados} decretos do Executivo carregados")
+    return gravados
+
+
 def main() -> None:
     # Monta num arquivo à parte e só troca no fim. Apagar o banco antes de
     # construir deixa o servidor sem acervo durante toda a montagem — e se a
@@ -181,7 +282,7 @@ def main() -> None:
             situacao_origem = "listagem" if situacao else "ausente"
 
         con.execute(
-            "INSERT OR REPLACE INTO ato VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT OR REPLACE INTO ato VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 caminho.stem,
                 origem.get(caminho.stem, "desconhecida"),
@@ -203,6 +304,11 @@ def main() -> None:
                 json.dumps(reg["data_divergente"], ensure_ascii=False)
                 if reg.get("data_divergente")
                 else None,
+                "ALERJ",
+                None,
+                None,
+                None,
+                0,
             ),
         )
         con.execute(
@@ -218,6 +324,8 @@ def main() -> None:
             con.commit()
             print(f"  {i}/{len(arquivos)}", flush=True)
 
+    con.commit()
+    atos += carregar_decretos(con)
     con.commit()
     print("construindo os índices de busca…")
     con.execute("INSERT INTO busca_texto(busca_texto) VALUES('rebuild')")

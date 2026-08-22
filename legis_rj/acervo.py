@@ -20,11 +20,22 @@ E A SITUAÇÃO NEM SEMPRE EXISTE
     lei ordinária          declarada no documento
     lei complementar       declarada só na listagem, e falta em 28 de 234
     emenda constitucional  declarada só na listagem
+    resolução              declarada no documento em 8.926 de 13.340
     decreto legislativo    NÃO EXISTE — a ALERJ não declara em lugar nenhum
-    resolução              NÃO EXISTE
+    decreto do Executivo   NÃO EXISTE — vem do Diário, que não acompanha
 
-Para as duas últimas, silêncio não é "em vigor": é ausência de informação, e a
-resposta tem de dizer isso.
+Silêncio não é "em vigor": é ausência de informação, e a resposta tem de dizer
+isso.
+
+DUAS FONTES, E ELAS SABEM COISAS DIFERENTES
+
+    ALERJ    declara situação e anota revogação por dispositivo
+    DOERJ    publica o ato e segue; o texto é o do dia em que saiu
+
+O decreto do Executivo só existe aqui pela segunda: a base da ALERJ que os
+guardava parou no Decreto 42.200, de dezembro de 2009. Então sobre decreto o
+acervo prova **publicação**, nunca vigência — e 345 números foram republicados,
+o que significa que a primeira versão circulou com incorreção.
 """
 
 from __future__ import annotations
@@ -41,9 +52,17 @@ ROTULOS = {
     "emenda_constitucional": "Emenda Constitucional",
     "decreto_legislativo": "Decreto Legislativo",
     "resolucao": "Resolução",
+    "decreto_executivo": "Decreto",
 }
 
-SEM_SITUACAO_NA_FONTE = {"decreto_legislativo", "resolucao"}
+SEM_SITUACAO_NA_FONTE = {"decreto_legislativo", "decreto_executivo"}
+
+# O que cada fonte é capaz de dizer — e não é a mesma coisa.
+FONTES = {
+    "ALERJ": "base CONTLEI da Assembleia Legislativa, que declara a situação do ato",
+    "DOERJ": "Diário Oficial do Estado, que publica o ato e não acompanha o que "
+    "acontece com ele depois",
+}
 
 # Como o usuário escreve, e o que isso quer dizer aqui.
 APELIDOS = {
@@ -57,7 +76,12 @@ APELIDOS = {
     "emenda constitucional": "emenda_constitucional",
     "dl": "decreto_legislativo",
     "decreto legislativo": "decreto_legislativo",
-    "decreto": "decreto_legislativo",
+    # "decreto", sem qualificar, é o do Governador — é o que se cita numa peça
+    # administrativa. O decreto legislativo é ato interno da Assembleia e
+    # precisa ser pedido pelo nome inteiro.
+    "decreto": "decreto_executivo",
+    "decreto estadual": "decreto_executivo",
+    "decreto do executivo": "decreto_executivo",
     "resolucao": "resolucao",
     "resolução": "resolucao",
 }
@@ -86,6 +110,9 @@ class Ato:
     url: str
     avisos: list[str] = field(default_factory=list)
     numero_alternativo: str | None = None
+    fonte: str = "ALERJ"
+    publicado_em: str | None = None
+    republicacoes: list[str] = field(default_factory=list)
 
     @property
     def citacao(self) -> str:
@@ -132,8 +159,17 @@ class Acervo:
             "SELECT SUM(data_divergente IS NOT NULL), SUM(numero_divergente IS NOT NULL) "
             "FROM ato"
         ).fetchone()
+        por_fonte = {
+            linha["fonte"]: linha["n"]
+            for linha in self.con.execute(
+                "SELECT fonte, COUNT(*) n FROM ato GROUP BY fonte"
+            )
+        }
         return {
-            "fonte": "Base CONTLEI da ALERJ (alerjln1.alerj.rj.gov.br)",
+            "fontes": {
+                nome: {"atos": por_fonte.get(nome, 0), "o_que_declara": descricao}
+                for nome, descricao in FONTES.items()
+            },
             "por_especie": por_especie,
             "total": self.con.execute("SELECT COUNT(*) FROM ato").fetchone()[0],
             "atos_com_anotacao_de_dispositivo": self.con.execute(
@@ -143,9 +179,13 @@ class Acervo:
                 "data": divergentes[0],
                 "numero": divergentes[1],
             },
+            "republicacoes_de_decreto": self.con.execute(
+                "SELECT COUNT(*) FROM ato WHERE republicacoes IS NOT NULL"
+            ).fetchone()[0],
             "o_que_nao_esta_aqui": [
-                "Decreto do Poder Executivo (o do Governador) — a base da ALERJ "
-                "que os guarda parou no Decreto 42.200, de 22/12/2009.",
+                "Vigência de decreto do Executivo: o Diário publica e segue, e a "
+                "base da ALERJ que anotava vigência de decreto parou em 2009.",
+                "Decreto anterior a 31/03/2008, quando começa o acervo do Diário.",
                 "Legislação anterior a março de 1975, quando a Guanabara se "
                 "fundiu ao antigo Estado do Rio.",
                 "Revogação tácita, e norma federal superveniente.",
@@ -261,7 +301,15 @@ class Acervo:
             },
         }
         avisos: list[str] = []
-        if ato.especie in SEM_SITUACAO_NA_FONTE:
+        if ato.fonte == "DOERJ":
+            avisos.append(
+                "Este decreto veio do Diário Oficial, que publica o ato e segue: "
+                "não há situação declarada, e o texto é o do dia da publicação. "
+                "Revogação posterior só aparece se outro decreto a disser — a "
+                "base da ALERJ, que anota vigência, não cobre decreto do "
+                "Executivo depois de 2009."
+            )
+        elif ato.especie in SEM_SITUACAO_NA_FONTE:
             avisos.append(
                 f"A ALERJ não declara situação para {ROTULOS[ato.especie]}: "
                 "a ausência aqui não é sinal de que a norma esteja em vigor."
@@ -306,6 +354,21 @@ class Acervo:
             avisos.append(
                 "O ano estava com dois dígitos na fonte; o século foi inferido."
             )
+        campos = linha.keys()
+        fonte = linha["fonte"] if "fonte" in campos else "ALERJ"
+        republicacoes = []
+        if "republicacoes" in campos and linha["republicacoes"]:
+            republicacoes = json.loads(linha["republicacoes"])
+            avisos.append(
+                f"Este decreto foi publicado mais de uma vez: {', '.join(republicacoes)} "
+                f"e {linha['publicado_em']}. Vale a última — a versão anterior "
+                "circulou com incorreção."
+            )
+        if "truncado" in campos and linha["truncado"]:
+            avisos.append(
+                "O texto deste ato saiu curto demais na extração do Diário: "
+                "provavelmente falta o corpo. Confira no inteiro teor."
+            )
         return Ato(
             unid=linha["unid"],
             especie=linha["especie"],
@@ -319,6 +382,9 @@ class Acervo:
             url=linha["url"],
             avisos=avisos,
             numero_alternativo=alternativo,
+            fonte=fonte,
+            publicado_em=linha["publicado_em"] if "publicado_em" in campos else None,
+            republicacoes=republicacoes,
         )
 
 

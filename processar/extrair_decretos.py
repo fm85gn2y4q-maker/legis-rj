@@ -102,12 +102,36 @@ def parece_ementa(linha: str) -> bool:
 FIM_DA_MATERIA = re.compile(r"Id:\s*\d+")
 
 
+# Menor corpo plausível de um decreto: ementa, fórmula do Governador, um artigo
+# e a assinatura. Abaixo disso não é decreto — é cabeçalho órfão.
+CORPO_MINIMO = 300
+
+
 def fim_de_materia(texto: str, inicio: int, limite: int) -> int | None:
-    """Posição da marca que realmente encerra a matéria, se houver."""
+    """Posição da marca que realmente encerra a matéria, se houver.
+
+    Duas exclusões, e cada uma corresponde a um jeito de a diagramação em duas
+    colunas se intercalar no texto:
+
+    1. **Marca seguida de minúscula** é rodapé de uma coluna caído no meio de
+       uma frase da outra. Medido no Decreto 48.310/2023: parar nela cortava o
+       ato de 11.793 para 877 caracteres, no meio de uma oração.
+
+    2. **Marca colada ao cabeçalho** é o fim da matéria *anterior*, que a
+       coluna despejou logo abaixo do título da seguinte. Medido no Decreto
+       48.515/2023: o `Id: 2480908` aparece entre o cabeçalho e a ementa, é
+       seguido de maiúscula — passa no teste 1 — e produzia um decreto de 39
+       caracteres, só o título. Eram 169 assim.
+
+    O que sustenta o corte é o fato de domínio: um decreto tem ementa, fórmula
+    e artigo. Não cabe em 39 caracteres.
+    """
     for marca in FIM_DA_MATERIA.finditer(texto, inicio, limite):
         depois = texto[marca.end() : marca.end() + 60].lstrip()
         if depois and depois[0].islower():
-            continue  # rodapé intercalado no meio de uma frase
+            continue
+        if marca.start() - inicio < CORPO_MINIMO:
+            continue
         return marca.start()
     return None
 
@@ -131,7 +155,7 @@ def valida(texto: str, inicio: int, fim_cabecalho: int) -> bool:
         return True
     # Sem fórmula, aceita-se a ementa em caixa alta logo abaixo.
     primeira = janela.lstrip("\n")[:400]
-    return bool(EMENTA.match(primeira.split("\n")[0] if primeira else ""))
+    return parece_ementa(primeira.split(chr(10))[0] if primeira else "")
 
 
 def pagina_em(texto: str, posicao: int) -> int:
