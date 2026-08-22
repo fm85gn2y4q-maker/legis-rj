@@ -18,8 +18,9 @@ desligada no meio da coleta não deixa o acervo travado para sempre.
 ORDEM DAS ETAPAS
 
 1. ALERJ, que é a que falta terminar.
-2. Remontar o banco, se o disco tiver documento que ele não conhece.
-3. Enxugar o DOERJ, que libera disco e confere links.
+2. Decretos que a varredura por edição não trouxe, um a um.
+3. Remontar o banco, se o disco tiver documento que ele não conhece.
+4. Enxugar o DOERJ, que libera disco e confere links.
 
 Cada etapa é isolada: uma falhando, a seguinte roda. O log fica em
 `dados/agendado.log`.
@@ -125,6 +126,33 @@ def alerj(coletar_alerj) -> None:
     coletar_alerj.fase_b(a, coletar_alerj.carregar_indice())
 
 
+def decretos_faltantes_se_houver() -> None:
+    """Busca, um a um, os decretos que a varredura por edição não trouxe.
+
+    Por que este passo existe: o calendário do Diário dá uma edição por dia, e
+    um dia pode ter mais de uma — o Decreto 48.313/2023 saiu na D.O. EXTRA de
+    10/01/2023, que o calendário não lista. A conferência de série achou 1.220
+    ausentes assim.
+
+    Roda aqui, e não à mão numa conversa, porque à mão morre junto com a
+    sessão. E entra depois da ALERJ pelo mesmo motivo de sempre: os dois batem
+    no mesmo servidor.
+    """
+    import json
+
+    faltantes = RAIZ / "dados" / "doerj" / "decretos_faltantes.json"
+    if not faltantes.exists():
+        return
+    sys.path.insert(0, str(RAIZ / "processar"))
+    import decretos_faltantes
+
+    numeros = json.loads(faltantes.read_text("utf-8"))
+    achados = decretos_faltantes.ja_localizados()
+    if len(achados) >= len(numeros):
+        anota(f"decretos: {len(achados)} localizados; baixando o que falta")
+    decretos_faltantes.main()
+
+
 def remontar_se_preciso() -> None:
     """Remonta o banco quando o disco tem documento que ele não conhece.
 
@@ -223,6 +251,7 @@ def main() -> None:
         # servidor, e ele já derruba conexão com uma só.
         etapa("ALERJ — demais espécies", coletar_especies.main)
         marcar_alerj_concluida()
+        etapa("decretos que faltam", decretos_faltantes_se_houver)
         etapa("banco", remontar_se_preciso)
         etapa("enxugar DOERJ", enxugar_doerj.main)
         anota("nada mais pendente nesta passada")
