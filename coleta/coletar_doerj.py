@@ -34,6 +34,7 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from ioerj import Ioerj  # noqa: E402
+from ferramentas import PDFTOTEXT  # noqa: E402
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 INDICE = RAIZ / "dados" / "calendario.json"
@@ -62,7 +63,7 @@ def registrar(reg: dict) -> None:
 def extrair_texto(pdf: pathlib.Path) -> tuple[str, int]:
     txt = pdf.with_suffix(".txt")
     subprocess.run(
-        ["pdftotext", "-enc", "UTF-8", str(pdf), str(txt)],
+        [PDFTOTEXT, "-enc", "UTF-8", str(pdf), str(txt)],
         check=True, capture_output=True, timeout=900,
     )
     texto = txt.read_text(encoding="utf-8", errors="replace")

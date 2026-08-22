@@ -37,6 +37,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "processar"))
 
 from ioerj import Ioerj, PARTE_EXECUTIVO  # noqa: E402
+from ferramentas import PDFTOTEXT  # noqa: E402
 
 import extrair_decretos  # noqa: E402
 
@@ -127,7 +128,7 @@ def baixar_e_extrair(io: Ioerj) -> None:
                 if not txt.exists():
                     pdf.write_bytes(io.pdf_da_edicao(dados["href"]))
                     subprocess.run(
-                        ["pdftotext", "-enc", "UTF-8", str(pdf), str(txt)],
+                        [PDFTOTEXT, "-enc", "UTF-8", str(pdf), str(txt)],
                         check=True, capture_output=True, timeout=900,
                     )
                     pdf.unlink()  # o texto basta; o link fica no registro

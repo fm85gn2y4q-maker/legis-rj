@@ -23,6 +23,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from ioerj import Edicao, Ioerj  # noqa: E402
+from ferramentas import PDFTOTEXT  # noqa: E402
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 BRUTO = RAIZ / "dados" / "bruto" / "doerj"
@@ -46,7 +47,7 @@ def texto_do_pdf(pdf: pathlib.Path) -> str:
     saida = pdf.with_suffix(".txt")
     if not saida.exists():
         subprocess.run(
-            ["pdftotext", "-enc", "UTF-8", str(pdf), str(saida)],
+            [PDFTOTEXT, "-enc", "UTF-8", str(pdf), str(saida)],
             check=True, capture_output=True, timeout=600,
         )
     return saida.read_text(encoding="utf-8", errors="replace")

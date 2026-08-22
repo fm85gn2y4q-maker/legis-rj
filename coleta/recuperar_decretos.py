@@ -46,6 +46,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "processar"))
 
 from ioerj import PARTE_EXECUTIVO, Ioerj  # noqa: E402
+from ferramentas import PDFTOTEXT  # noqa: E402
 
 import extrair_decretos  # noqa: E402
 
@@ -110,7 +111,7 @@ def texto_do_caderno(io: Ioerj, href: str, apelido: str) -> str | None:
     try:
         pdf.write_bytes(io.pdf_da_edicao(href))
         subprocess.run(
-            ["pdftotext", "-enc", "UTF-8", str(pdf), str(txt)],
+            [PDFTOTEXT, "-enc", "UTF-8", str(pdf), str(txt)],
             check=True, capture_output=True, timeout=900,
         )
     except Exception:  # noqa: BLE001
