@@ -150,12 +150,22 @@ MENOR_NUMERO_PLAUSIVEL = 10_000
 
 
 def valida(texto: str, inicio: int, fim_cabecalho: int) -> bool:
-    janela = texto[fim_cabecalho : fim_cabecalho + 1200]
+    """Cabeçalho de verdade, ou citação com a mesma forma?
+
+    Exigir a ementa **na linha imediatamente seguinte** rejeitava decreto
+    legítimo: entre o título e a ementa costuma entrar o nome do órgão —
+    "Secretaria de Estado da Casa Civil" —, e o Decreto 48.313/2023 ficou de
+    fora do acervo por isso. Procura-se a ementa nas primeiras linhas, não só
+    na próxima.
+
+    E a janela da fórmula precisa ser larga: decreto com muitos considerandos
+    leva milhares de caracteres até chegar ao DECRETA.
+    """
+    janela = texto[fim_cabecalho : fim_cabecalho + 4000]
     if ABERTURA.search(janela):
         return True
-    # Sem fórmula, aceita-se a ementa em caixa alta logo abaixo.
-    primeira = janela.lstrip("\n")[:400]
-    return parece_ementa(primeira.split(chr(10))[0] if primeira else "")
+    linhas = [l.strip() for l in janela.split(chr(10))[:8] if l.strip()]
+    return any(parece_ementa(l) for l in linhas)
 
 
 def pagina_em(texto: str, posicao: int) -> int:

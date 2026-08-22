@@ -389,8 +389,10 @@ class Acervo:
 
 
 RE_REFERENCIA = re.compile(
+    # A ordem manda: a alternativa mais longa vem primeiro, ou "decreto
+    # legislativo" casaria só o "decreto" e viraria decreto do Executivo.
     r"(?P<especie>lei\s+complementar|emenda\s+constitucional|decreto\s+legislativo|"
-    r"resolu[çc][ãa]o|lei|lc|ec|dl)\s*"
+    r"decreto\s+estadual|decreto\s+do\s+executivo|resolu[çc][ãa]o|decreto|lei|lc|ec|dl)\s*"
     r"(?:n[ºo°.]?\s*)?(?P<numero>[\d.]+)\s*(?:/\s*(?P<ano>\d{2,4}))?",
     re.IGNORECASE,
 )
