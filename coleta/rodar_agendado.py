@@ -1,6 +1,6 @@
 """Toca a coleta sozinho, para a máquina rodar sem ninguém olhando.
 
-É o que a Tarefa Agendada do Windows chama a cada quinze minutos. Cada chamada
+É o que a Tarefa Agendada do Windows chama a cada duas horas. Cada chamada
 faz o que ainda falta e sai; quando não falta nada, sai em segundos. Não há
 "começar de novo": todas as etapas são retomáveis por construção.
 
@@ -12,8 +12,9 @@ o agendador não conhece — a que eu subo à mão numa conversa — passaria po
 cima dela. Duas coletas simultâneas gravando o mesmo `indice.jsonl` corrompem
 o índice, e o estrago só apareceria muito depois.
 
-A trava guarda o PID e é ignorada se o processo dono já morreu: máquina
-desligada no meio da coleta não deixa o acervo travado para sempre.
+A trava guarda o PID, confere que ele é de um Python e vale por no máximo
+meia hora sem sinal de vida — máquina desligada no meio da coleta, ou PID
+reaproveitado pelo Windows, não deixam o acervo travado para sempre.
 
 ORDEM DAS ETAPAS
 
@@ -60,31 +61,70 @@ def anota(mensagem: str) -> None:
             pass
 
 
+# Meia hora sem escrever no log é mais tempo do que qualquer etapa passa
+# calada: as longas registram progresso a cada dezenas de itens.
+TRAVA_VELHA = 30 * 60
+
+TASKLIST = pathlib.Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "tasklist.exe"
+
+
 def processo_vivo(pid: int) -> bool:
+    """O processo daquele PID existe **e é um Python**?
+
+    Duas correções sobre a versão anterior, e as duas vinham travando a coleta
+    por horas sem deixar rastro:
+
+    1. **`tasklist` pelo caminho absoluto.** Sob a Tarefa Agendada o PATH é
+       outro, e a chamada falhava; o `except` respondia "na dúvida, respeita a
+       trava", que é o padrão errado — uma ferramenta que não abre passava a
+       significar "há coleta rodando", para sempre. É o mesmo defeito que
+       cegou o `pdftotext` por 674 edições.
+
+    2. **Conferir que é Python.** O Windows reaproveita PID. Um PID de processo
+       morto reatribuído a qualquer programa fazia a trava valer para sempre.
+    """
     if pid == os.getpid():
         return False
     try:
         import subprocess
 
         saida = subprocess.run(
-            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+            [str(TASKLIST), "/FI", f"PID eq {pid}", "/NH", "/FO", "CSV"],
             capture_output=True, text=True, timeout=30,
-        ).stdout
-        return str(pid) in saida
+        ).stdout.lower()
     except Exception:  # noqa: BLE001
-        return True  # na dúvida, respeita a trava
+        # Sem conseguir perguntar, a idade da trava decide — ver pegar_trava.
+        return True
+    return "python" in saida
 
 
 def pegar_trava() -> bool:
+    """A trava impede duas coletas ao mesmo tempo — sem impedir todas.
+
+    Uma trava que só sai quando o dono morre bem é uma trava que fica. Aqui a
+    idade também vale: passada meia hora sem nada ser escrito no log, o dono
+    não está trabalhando, esteja ele vivo ou não.
+
+    Medido antes de escrever isto: a coleta ficou **dezessete horas** parada
+    porque a trava apontava um PID que a checagem julgou vivo. Nenhum erro,
+    nenhuma linha no log além de "já há coleta rodando".
+    """
     if TRAVA.exists():
         try:
             dono = int(TRAVA.read_text("utf-8").strip() or 0)
         except ValueError:
             dono = 0
-        if dono and processo_vivo(dono):
+        parada = time.time() - LOG.stat().st_mtime if LOG.exists() else 0
+        if dono and processo_vivo(dono) and parada < TRAVA_VELHA:
             anota(f"já há coleta rodando (pid {dono}); saindo")
             return False
-        anota(f"trava órfã do pid {dono}; assumindo")
+        if parada >= TRAVA_VELHA:
+            anota(
+                f"trava do pid {dono} sem sinal de vida há {parada / 60:.0f} min; "
+                "assumindo"
+            )
+        else:
+            anota(f"trava órfã do pid {dono}; assumindo")
     TRAVA.write_text(str(os.getpid()), encoding="utf-8")
     return True
 
