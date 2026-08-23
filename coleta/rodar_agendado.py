@@ -252,7 +252,17 @@ def marcar_alerj_concluida() -> None:
 
 
 def main() -> None:
-    (RAIZ / "dados").mkdir(exist_ok=True)
+    # O acervo mora num HD externo. Sem ele, cada coletor concluiria que
+    # não há nada coletado e começaria tudo de novo — 4.455 edições e 25 mil
+    # documentos, por cima do que já está inteiro no disco desconectado.
+    import disco
+
+    try:
+        disco.conferir()
+    except disco.AcervoForaDeAlcance as exc:
+        anota(f"ACERVO FORA DE ALCANCE: {exc}")
+        return
+
     if not pegar_trava():
         return
     try:
