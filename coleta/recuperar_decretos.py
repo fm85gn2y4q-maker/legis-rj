@@ -123,6 +123,14 @@ def texto_do_caderno(io: Ioerj, href: str, apelido: str) -> str | None:
     txt = CADERNOS / f"{apelido}.txt"
     if txt.exists():
         return txt.read_text(encoding="utf-8", errors="replace")
+    # Já compactado por uma passada de limpeza: vale igual, e rebaixá-lo seria
+    # gastar rede para obter o que está aqui.
+    comprimido = CADERNOS / f"{apelido}.txt.gz"
+    if comprimido.exists():
+        import gzip
+
+        with gzip.open(comprimido, "rt", encoding="utf-8", errors="replace") as f:
+            return f.read()
     pdf = CADERNOS / f"{apelido}.pdf"
     try:
         pdf.write_bytes(io.pdf_da_edicao(href))

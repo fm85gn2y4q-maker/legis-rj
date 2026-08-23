@@ -20,6 +20,20 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import extrair_decretos  # noqa: E402
 
+
+def ler_caderno(caminho: pathlib.Path) -> str:
+    """Lê o caderno esteja ele compactado ou não.
+
+    O texto bruto é grande e comprime cinco para um; quem lê não precisa saber
+    em que estado ele está.
+    """
+    if caminho.suffix == ".gz":
+        import gzip
+
+        with gzip.open(caminho, "rt", encoding="utf-8", errors="replace") as f:
+            return f.read()
+    return caminho.read_text(encoding="utf-8", errors="replace")
+
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 DOERJ = RAIZ / "dados" / "doerj"
 CONSOLIDADO = DOERJ / "decretos_todos.jsonl"
@@ -43,9 +57,9 @@ def main() -> None:
         if not caminho.exists():
             continue
         antes = sum(len(v) for v in por_numero.values())
-        for txt in sorted(caminho.glob("*.txt")):
-            texto = txt.read_text(encoding="utf-8", errors="replace")
-            dia = txt.stem[:10]
+        for txt in sorted(list(caminho.glob("*.txt")) + list(caminho.glob("*.txt.gz"))):
+            texto = ler_caderno(txt)
+            dia = txt.name[:10]
             for decreto in extrair_decretos.extrair_da_edicao(texto, dia):
                 decreto["origem"] = pasta
                 guardar(decreto)

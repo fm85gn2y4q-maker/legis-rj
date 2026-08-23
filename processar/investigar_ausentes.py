@@ -22,6 +22,8 @@ import json
 import pathlib
 import re
 
+import ler_texto
+
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 DOERJ = RAIZ / "dados" / "doerj"
 
@@ -35,10 +37,10 @@ def main() -> None:
     ausentes = set(json.loads((DOERJ / "decretos_sem_materia.json").read_text("utf-8")))
     citados: collections.Counter = collections.Counter()
 
-    arquivos = sorted(DOERJ.glob("*.txt"))
+    arquivos = ler_texto.edicoes(DOERJ)
     print(f"lendo {len(arquivos)} edições em busca de citações…")
     for i, caminho in enumerate(arquivos, 1):
-        texto = caminho.read_text(encoding="utf-8", errors="replace")
+        texto = ler_texto.ler(caminho)
         for achado in CITACAO.finditer(texto):
             numero = int(achado.group(1).replace(".", ""))
             if numero in ausentes:

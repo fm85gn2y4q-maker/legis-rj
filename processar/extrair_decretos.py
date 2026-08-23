@@ -42,6 +42,8 @@ from __future__ import annotations
 import json
 import pathlib
 import re
+
+import ler_texto
 import sys
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
@@ -227,7 +229,7 @@ def extrair_da_edicao(texto: str, data_edicao: str) -> list[dict]:
 
 
 def main() -> None:
-    arquivos = sorted(DOERJ.glob("*.txt"))
+    arquivos = ler_texto.edicoes(DOERJ)
     limite = int(sys.argv[1]) if len(sys.argv) > 1 else len(arquivos)
     arquivos = arquivos[:limite]
     print(f"{len(arquivos)} edições")
@@ -235,8 +237,8 @@ def main() -> None:
     total = 0
     with SAIDA.open("w", encoding="utf-8") as f:
         for i, caminho in enumerate(arquivos, 1):
-            texto = caminho.read_text(encoding="utf-8", errors="replace")
-            for decreto in extrair_da_edicao(texto, caminho.stem):
+            texto = ler_texto.ler(caminho)
+            for decreto in extrair_da_edicao(texto, ler_texto.dia_de(caminho)):
                 f.write(json.dumps(decreto, ensure_ascii=False) + "\n")
                 total += 1
             if i % 500 == 0:
