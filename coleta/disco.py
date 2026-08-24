@@ -45,7 +45,7 @@ def conferir() -> None:
         raise AcervoForaDeAlcance(
             f"{DADOS} não existe. O acervo vive aqui mesmo, no disco interno. "
             "Se sumiu, provavelmente a rotina de arquivamento o levou para "
-            "D:\Acervos\projetos__legis-rj__dados — traga de volta antes de "
+            r"D:\Acervos\projetos__legis-rj__dados — traga de volta antes de "
             "deixar a coleta rodar, ou ela recomeça do zero."
         )
     faltando = [m.name for m in MARCAS if not m.exists()]
