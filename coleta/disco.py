@@ -1,8 +1,14 @@
 r"""Confere que o acervo está alcançável antes de qualquer coleta.
 
-Os dados moraram em `C:` e passaram a morar num HD externo, alcançados por uma
-junção em `dados`. O caminho no código não mudou — mas a premissa mudou: agora
-ele depende de um disco que pode estar desconectado.
+O acervo mora em `C:`. Já morou num HD externo por algumas horas, em
+23/08/2026, e voltou: o disco registrou erro de I/O e aviso de possível dano no
+log de transações do NTFS.
+
+Esta checagem continua valendo, e por um motivo que não é o disco externo. A
+máquina tem uma **rotina de arquivamento** que move pastas de dados de projeto
+para `D:\Acervos\`, com nome achatado — foi ela que partiu este acervo em dois
+lugares naquele dia. Se ela passar de novo por aqui, `dados` some do caminho de
+sempre.
 
 E o modo de falhar aí é o pior possível. Sem o HD, `dados` some ou fica vazio,
 e todo coletor deste projeto foi escrito para ser retomável: ao não encontrar
@@ -37,14 +43,16 @@ class AcervoForaDeAlcance(RuntimeError):
 def conferir() -> None:
     if not DADOS.exists():
         raise AcervoForaDeAlcance(
-            f"{DADOS} não existe. O acervo vive no HD externo (D:), alcançado "
-            "por uma junção. Se o HD estiver desconectado, reconecte-o — não "
-            "apague a junção nem deixe a coleta rodar, ou ela recomeça do zero."
+            f"{DADOS} não existe. O acervo vive aqui mesmo, no disco interno. "
+            "Se sumiu, provavelmente a rotina de arquivamento o levou para "
+            "D:\Acervos\projetos__legis-rj__dados — traga de volta antes de "
+            "deixar a coleta rodar, ou ela recomeça do zero."
         )
     faltando = [m.name for m in MARCAS if not m.exists()]
     if faltando:
         raise AcervoForaDeAlcance(
             f"{DADOS} existe mas está sem {', '.join(faltando)}. Isso não é "
-            "acervo novo, é acervo inacessível: provavelmente o HD externo não "
-            "está montado. A coleta não vai rodar para não recomeçar do zero."
+            "acervo novo, é acervo incompleto — foi assim que ele apareceu "
+            "quando metade dele tinha sido movida para outro lugar. A coleta "
+            "não vai rodar, para não recomeçar do zero por cima do que existe."
         )
