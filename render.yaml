@@ -1,0 +1,40 @@
+# Blueprint do Render. Aplicar por Dashboard -> Blueprints -> New Blueprint.
+#
+# So declara o que foi verificado. Chave inventada faz o deploy falhar por
+# motivo invisivel de fora.
+services:
+  - type: web
+    name: legislacao-rj
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+
+    # `healthCheckPath` fica de fora DE PROPOSITO, e isto foi medido no projeto
+    # irmao.
+    #
+    # O Render faz GET no caminho declarado e so considera o servico saudavel
+    # com 2xx/3xx. O endpoint MCP responde:
+    #
+    #     GET  /mcp  -> 406 Not Acceptable  ("Client must accept text/event-stream")
+    #     GET  /     -> 404
+    #     POST /mcp  -> 200
+    #
+    # Ou seja: nao existe caminho que responda 2xx a um GET. Declarar
+    # `healthCheckPath: /mcp` deixaria o servico eternamente "unhealthy", e o
+    # deploy falharia sem dizer por que.
+    #
+    # Sem a chave, o Render considera o servico no ar quando o processo passa a
+    # escutar na porta, que e o comportamento correto para este servidor.
+
+    envVars:
+      # Preenchidos DEPOIS do primeiro deploy, quando o endereco publico
+      # existir. Sem eles o servidor recusa toda requisicao externa com 421 —
+      # e a protecao contra DNS rebinding, e a comparacao de Host e exata.
+      - key: LEGIS_RJ_DOMINIOS
+        sync: false
+      # Ativa o fluxo OAuth, que o ChatGPT exige para aceitar um conector.
+      # O Claude conecta sem ele.
+      - key: LEGIS_RJ_URL_PUBLICA
+        sync: false
+      - key: LEGIS_RJ_SEGREDO_OAUTH
+        generateValue: true

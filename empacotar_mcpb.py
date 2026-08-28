@@ -78,9 +78,9 @@ if _dlls.is_dir():
 # na primeira pergunta, procurando um banco que nao viajou junto.
 os.environ.setdefault("LEGIS_RJ_BANCO", str(AQUI.parent / "dados" / "legis-rj.sqlite"))
 
-from legis_rj.servidor import mcp  # noqa: E402
+from legis_rj.servidor import construir  # noqa: E402
 
-mcp.run(transport="stdio")
+construir().run(transport="stdio")
 '''
 
 MANIFESTO = {
