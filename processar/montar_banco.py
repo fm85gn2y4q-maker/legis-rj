@@ -43,7 +43,13 @@ from extrair import extrair  # noqa: E402
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 ALERJ = RAIZ / "dados" / "alerj"
 DOCS = ALERJ / "docs"
-BANCO = RAIZ / "dados" / "legis-rj.sqlite"
+# O banco NÃO mora junto com a matéria-prima, e a razão é medida:
+# `dados/` é junção para o HD externo, e ler o SQLite de lá custou 24 s só para
+# abrir o arquivo; no disco rápido, 1 s. Vale para toda pergunta que o servidor
+# responde. PDF e JSONL ficam no HD, que é onde o espaço importa; o banco fica
+# em C:, que é onde a latência importa. E `banco/` está fora de `dados/`, então
+# a rotina de arquivamento da máquina não o leva junto.
+BANCO = RAIZ / "banco" / "legis-rj.sqlite"
 
 ESQUEMA = """
 CREATE TABLE ato (
@@ -66,7 +72,8 @@ CREATE TABLE ato (
     publicado_em      TEXT,            -- data da edição do Diário
     pagina            INTEGER,
     republicacoes     TEXT,            -- JSON com as outras datas de publicação
-    truncado          INTEGER DEFAULT 0
+    truncado          INTEGER DEFAULT 0,
+    corpo_suspeito    TEXT             -- por que o corpo deste registro não é confiável
 );
 CREATE INDEX ato_por_numero ON ato (especie, numero_ordenavel, ano);
 CREATE INDEX ato_por_ano ON ato (ano);
@@ -156,6 +163,19 @@ DECRETOS_CONSOLIDADO = RAIZ / "dados" / "doerj" / "decretos_todos.jsonl"
 DECRETOS = RAIZ / "dados" / "doerj" / "decretos.jsonl"
 EDICOES = RAIZ / "dados" / "doerj" / "edicoes.jsonl"
 CORPO_SUSPEITO = 300
+# Acima disto o corpo quase certamente arrastou material que não é do ato. Não
+# se descarta o registro: 31 de 11.200 passam daqui, e parte é legítima — o
+# Decreto 49.643/2025 é o Regulamento de Inspeção Industrial inteiro, 305 mil
+# caracteres de verdade. Mas o 41.021 tem 217 mil porque o cabeçalho casou
+# dentro de um índice de anexos, e a fronteira que o Diário imprime só aparece
+# depois de tudo. Como não dá para separar os dois com segurança, o registro
+# entra e **avisa** — que é o que esta base faz quando não sabe.
+CORPO_LONGO_DEMAIS = 100_000
+# Quanto do maior texto conhecido de um número uma ocorrência precisa ter para
+# ser considerada o ato, e não uma menção a ele. Metade é folgado: republicação
+# corrigida costuma variar pouco de tamanho, e menção fica uma ordem de
+# grandeza abaixo.
+FRACAO_MINIMA_DA_MAIOR = 0.5
 
 
 def carregar_decretos(con: sqlite3.Connection) -> int:
@@ -198,23 +218,44 @@ def carregar_decretos(con: sqlite3.Connection) -> int:
     gravados = 0
     for numero, ocorrencias in por_numero.items():
         ocorrencias.sort(key=lambda r: r["data_publicacao"])
-        # A última publicação manda; se ela vier truncada e houver uma inteira
-        # antes, fica a inteira — o critério é ter texto, não ser recente.
-        atual = ocorrencias[-1]
-        if atual["chars"] < CORPO_SUSPEITO:
-            inteiras = [o for o in ocorrencias if o["chars"] >= CORPO_SUSPEITO]
-            if inteiras:
-                atual = inteiras[-1]
-        anteriores = [
-            o["data_publicacao"] for o in ocorrencias if o is not atual
-        ]
+        # A ÚLTIMA PUBLICAÇÃO MANDA — MAS SÓ ENTRE AS QUE SÃO O ATO
+        #
+        # A regra existe porque republicação corrige: sai com incorreção, sai
+        # de novo dias depois, e vale a segunda. O que ela não previa é que
+        # nem toda ocorrência posterior é uma republicação — muitas são
+        # menção, errata de uma linha ou entrada de sumário.
+        #
+        # Medido: o Decreto 44.584/2014, que altera cinco livros do RICMS,
+        # aparece quatro vezes — 197.441, 222.221, 2.786 e **371** caracteres.
+        # A última é uma nota, e era ela que estava no banco. O acervo dizia
+        # ter o decreto e entregava um fragmento, sem nada acusando.
+        #
+        # O piso de 300 caracteres não pegava isso: 371 passa. O piso certo é
+        # relativo — uma republicação de verdade tem porte parecido com o do
+        # ato; um fragmento tem uma fração dele.
+        maior = max(o["chars"] for o in ocorrencias)
+        piso = max(CORPO_SUSPEITO, int(maior * FRACAO_MINIMA_DA_MAIOR))
+        candidatas = [o for o in ocorrencias if o["chars"] >= piso]
+        atual = candidatas[-1] if candidatas else ocorrencias[-1]
+        # Republicação é sair em EDIÇÕES diferentes. A mesma edição extraída de
+        # cadernos diferentes gera ocorrências repetidas, e listá-las fazia o
+        # servidor anunciar "publicado mais de uma vez: 2012-05-30, 2012-05-30,
+        # 2012-05-30..." — alarme falso sobre um ato que saiu uma vez só, e que
+        # levaria o advogado a duvidar do texto sem motivo.
+        anteriores = sorted(
+            {
+                o["data_publicacao"]
+                for o in ocorrencias
+                if o["data_publicacao"] != atual["data_publicacao"]
+            }
+        )
         unid = f"doerj:{numero}:{atual['data_publicacao']}"
         link = edicoes.get(atual["data_publicacao"], "")
         if link and atual.get("pagina"):
             link = f"{link}#page={atual['pagina']}"
 
         con.execute(
-            "INSERT OR REPLACE INTO ato VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT OR REPLACE INTO ato VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 unid,
                 "decreto_executivo",
@@ -236,6 +277,14 @@ def carregar_decretos(con: sqlite3.Connection) -> int:
                 atual.get("pagina"),
                 json.dumps(anteriores, ensure_ascii=False) if anteriores else None,
                 1 if atual["chars"] < CORPO_SUSPEITO else 0,
+                (
+                    f"corpo de {atual['chars']} caracteres, muito acima do "
+                    f"normal para um decreto; a fronteira do ato foi decidida "
+                    f"por '{atual.get('fronteira', 'desconhecida')}' e pode ter "
+                    f"arrastado matéria vizinha"
+                )
+                if atual["chars"] > CORPO_LONGO_DEMAIS
+                else None,
             ),
         )
         con.execute(
@@ -255,6 +304,7 @@ def main() -> None:
     # montagem morrer no meio, sem acervo nenhum. Aconteceu: um processo em
     # segundo plano foi morto junto com o terminal e o que sobrou foi um banco
     # de zero atos, respondendo normalmente.
+    BANCO.parent.mkdir(parents=True, exist_ok=True)
     parcial = BANCO.with_suffix(".sqlite.parcial")
     if parcial.exists():
         parcial.unlink()
@@ -288,7 +338,7 @@ def main() -> None:
             situacao_origem = "listagem" if situacao else "ausente"
 
         con.execute(
-            "INSERT OR REPLACE INTO ato VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT OR REPLACE INTO ato VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 caminho.stem,
                 origem.get(caminho.stem, "desconhecida"),
@@ -315,6 +365,7 @@ def main() -> None:
                 None,
                 None,
                 0,
+                None,   # corpo_suspeito: só vale para decreto do DOERJ
             ),
         )
         con.execute(
@@ -348,6 +399,13 @@ def main() -> None:
     if BANCO.exists():
         BANCO.unlink()
     parcial.rename(BANCO)
+    # A marca é gravada AQUI, depois da troca — só o banco que ficou em pé
+    # pode dizer de que material foi feito. Ela ficou uma semana congelada em
+    # 21/08 porque esta chamada não existia: a função estava escrita, comentada
+    # e morta. O efeito não foi banco velho, foi o contrário — a comparação
+    # nunca batia e a tarefa remontava o acervo inteiro a cada duas horas,
+    # nove vezes em três dias, sem nada no log parecendo errado.
+    registrar_construcao()
     print(f"banco trocado: {BANCO}")
 
 
@@ -372,8 +430,8 @@ def _impressao_digital() -> dict:
     }
 
 
-def registrar_construcao(documentos: int) -> None:
-    """Deixa em disco de quantos documentos este banco foi feito.
+def registrar_construcao() -> None:
+    """Deixa em disco de que material este banco foi feito.
 
     Sem isso o banco envelhece calado: a coleta avança, o servidor continua
     respondendo normalmente, e ninguém percebe que ele parou de conhecer os
