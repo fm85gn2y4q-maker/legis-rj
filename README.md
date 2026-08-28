@@ -12,10 +12,26 @@ buscas separadas, acervo fora do Git.
 ## Estado atual
 
 **Fase 1 — medição das fontes: feita.** Está tudo em [FONTES.md](FONTES.md),
-com os números e as requisições que os produziram. Nada de coleta em massa foi
-executado ainda.
+com os números e as requisições que os produziram.
 
-O que a medição já mudou no plano:
+**Fase 2 — coleta e servidor: em operação.** O acervo responde por um servidor
+MCP com seis ferramentas, sobre um banco de **34.138 atos**:
+
+    25.050  ALERJ    lei ordinária, lei complementar, emenda constitucional,
+                     decreto legislativo e resolução — com situação declarada
+     9.088  DOERJ    decreto do Executivo, extraído do texto do Diário
+
+A cobertura é **declarada, não presumida**: a série de decretos vai de 42.200 a
+50.431 e faltam **154 (1,9%)**, dos quais 17 têm existência comprovada porque
+outros atos os citam. O servidor diz isso em toda resposta que dependa disso —
+"não encontrei" nunca passa por "não existe".
+
+Dois avisos por registro, simétricos e igualmente necessários: 345 atos vêm
+marcados como `truncado` (o Diário só trouxe um fragmento) e 17 com
+`corpo_suspeito` (o corpo é grande demais e pode ter arrastado matéria
+vizinha). Nenhum dos dois é descartado; ambos são declarados.
+
+O que a medição mudou no plano, e continua valendo:
 
 - **Decreto do Executivo não está na base de legislação** — e a base onde ele
   está foi abandonada. Fica em `decest.nsf`, que não aparece no menu do portal
@@ -60,6 +76,30 @@ medicoes/                     o que cada sondagem mediu, em JSON
 dados/bruto/                  o que veio da rede, intocado (fora do Git)
 ```
 
+### Onde os arquivos moram, e por quê são dois lugares
+
+Esta máquina tem uma rotina de arquivamento que move periodicamente
+`projetos\legis-rj\dados` para `D:\Acervos\projetos__legis-rj__dados` e
+deixa uma junção no lugar. Ela é do usuário e roda sozinha; brigar com ela é
+perder — na primeira tentativa de manter o acervo em C:, a rotina desfez a
+mudança em minutos e levou junto um banco recém-montado.
+
+Então o acervo acompanha a rotina, com uma separação deliberada:
+
+    dados/   junção para D:\Acervos\...   PDF, texto e JSONL — onde pesa o espaço
+    banco/   disco interno, fora de dados/  o SQLite — onde pesa a latência
+
+A divisão não é estética. Medido neste acervo: abrir o banco de 182 MB e
+conferir a integridade custou **24,3 s** lendo do HD USB e **1,1 s** do disco
+interno. Toda pergunta que o servidor responde paga esse pedágio. E `banco/`
+estar fora de `dados/` é o que impede a rotina de arquivamento de levá-lo.
+
+Ressalva que não se apaga: neste HD o Windows já registrou erro de I/O (`disk`
+ID 51), aviso de dano no log de transações do NTFS (`Ntfs` ID 140) e uma
+leitura que estourou `WinError 433`. O acervo está lá por decisão do usuário,
+ciente disso. O banco em C: é também o que sobra se o HD sumir no meio de uma
+coleta.
+
 ## Rodar
 
 ```bash
@@ -70,6 +110,40 @@ py -3.12 -m venv .venv
 
 O ambiente é por projeto: o Python global desta máquina carrega dependências
 que se contradizem, e instalar nele quebra os servidores MCP já publicados.
+
+### A âncora que escondia decreto, e o que ela custou
+
+O extrator de decretos procurava o cabeçalho no **início da linha** (`^` com
+`re.MULTILINE`). Em parte das edições o ato não começa a linha — vem emendado
+no fio do texto, depois do título da seção e às vezes com asterisco de
+republicação:
+
+    ... circulam hoje em um só caderno  ATOS DO PODER EXECUTIVO *DECRETO Nº
+    45.739 DE 23 DE AGOSTO DE 2016  ABRE CRÉDITO SUPLEMENTAR ...
+
+Nessas edições o extrator não via **nada** e a edição inteira saía como "sem
+decreto". O erro não deu sintoma nenhum: a coleta terminava, o banco montava, o
+servidor respondia — e 505 decretos publicados constavam como ausentes.
+
+Soltar a âncora, sozinho, traria a citação junto: "nos termos do Decreto nº
+14.870…" casa igual. A defesa é a data que o próprio cabeçalho carrega. Medido
+em 120 cadernos:
+
+    cabeçalhos legítimos   1 a 177 dias da edição (mediana 1, p95 5)
+    citações               1.053, 2.337, 2.410 e 8.893 dias
+
+Não há nada no meio, e o corte ficou em 365 dias. A guarda vale **só** para o
+cabeçalho solto: o que já entrava pela âncora continua entrando como antes,
+para a correção não mudar por baixo o acervo que já tinha sido conferido.
+
+Resultado imediato, sem baixar um único arquivo — era texto que já estava em
+disco: 933 ausentes (11,3%) viraram 412 (5,0%).
+
+E a correção do extrator destravou a coleta pela rede, que antes rendia zero.
+A recuperação por Diário, que em duas rodadas trouxe **0 em 50 tentativas**,
+passou a acertar **59%** com a mesma máquina e a mesma fonte — os decretos
+sempre estiveram publicados; o extrator é que não os via. A série fechou em
+**154 ausentes (1,9%)**.
 
 ## Coleta
 

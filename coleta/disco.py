@@ -1,14 +1,15 @@
 r"""Confere que o acervo está alcançável antes de qualquer coleta.
 
-O acervo mora em `C:`. Já morou num HD externo por algumas horas, em
-23/08/2026, e voltou: o disco registrou erro de I/O e aviso de possível dano no
-log de transações do NTFS.
+O acervo mora em `C:`, e isso é decisão tomada com medida na mão. Ele esteve em
+`D:\Acervos\projetos__legis-rj__dados` entre 23 e 25/08/2026 e o disco derrubou
+a coleta três vezes. Na terceira, o Windows registrou 6.983 erros `disk` 51 e
+dois `Ntfs` **55** — corrupção encontrada na estrutura do volume, não erro de
+leitura. Ver `NAO-MIGRAR.md` na raiz.
 
-Esta checagem continua valendo, e por um motivo que não é o disco externo. A
-máquina tem uma **rotina de arquivamento** que move pastas de dados de projeto
-para `D:\Acervos\`, com nome achatado — foi ela que partiu este acervo em dois
-lugares naquele dia. Se ela passar de novo por aqui, `dados` some do caminho de
-sempre.
+Esta checagem continua valendo, e por um motivo que não é o disco. A máquina
+tem `~/projetos/_migracao/migrar.py`, que sessões do Claude rodam para levar a
+pasta de dados de um projeto para `D:\Acervos\`, deixando junção no lugar. Se
+alguém o rodar sobre este projeto, `dados` volta para o disco ruim.
 
 E o modo de falhar aí é o pior possível. Sem o HD, `dados` some ou fica vazio,
 e todo coletor deste projeto foi escrito para ser retomável: ao não encontrar
@@ -44,9 +45,10 @@ def conferir() -> None:
     if not DADOS.exists():
         raise AcervoForaDeAlcance(
             f"{DADOS} não existe. O acervo vive aqui mesmo, no disco interno. "
-            "Se sumiu, provavelmente a rotina de arquivamento o levou para "
-            r"D:\Acervos\projetos__legis-rj__dados — traga de volta antes de "
-            "deixar a coleta rodar, ou ela recomeça do zero."
+            "Se sumiu, provavelmente alguém rodou _migracao/migrar.py e o "
+            r"levou para D:\Acervos\projetos__legis-rj__dados — traga de "
+            "volta antes de deixar a coleta rodar, ou ela recomeça do zero. "
+            "E leia NAO-MIGRAR.md antes: aquele disco corrompeu."
         )
     faltando = [m.name for m in MARCAS if not m.exists()]
     if faltando:

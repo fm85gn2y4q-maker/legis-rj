@@ -11,3 +11,5 @@ dados/
 
 # log da tarefa agendada
 dados/agendado*.log
+trabalho/
+cadernos/
