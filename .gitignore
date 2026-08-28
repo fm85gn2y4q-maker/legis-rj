@@ -13,3 +13,5 @@ dados/
 dados/agendado*.log
 trabalho/
 cadernos/
+build/
+dist/

@@ -1,0 +1,12 @@
+# Só o que o servidor MCP precisa para responder.
+#
+# A coleta (requests, beautifulsoup4, lxml) roda nesta máquina e não entra na
+# imagem nem no pacote: eles servem o acervo já coletado.
+#
+# Este arquivo é a ÚNICA declaração da dependência — o empacotador .mcpb lê
+# daqui em vez de repetir o pin. Duas declarações da mesma dependência divergem
+# em silêncio; uma só, não.
+#
+# `mcp` abaixo de 2 porque a 2.x removeu `mcp.server.fastmcp`, que é o que
+# `legis_rj/servidor.py` importa. Aqui está instalado o 1.29.0.
+mcp>=1.28,<2
