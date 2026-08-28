@@ -199,12 +199,18 @@ class Acervo:
         Um acervo jurídico não pode deixar "não encontrei" passar por "não
         existe". Aqui a diferença é medida: parte dos decretos ausentes é
         **comprovadamente existente**, porque outros atos os citam — e o mais
-        citado aparece 13.754 vezes, sustentando milhares de despachos.
+        citado (48.259) aparece 1.979 vezes, sustentando milhares de despachos.
 
         Quem responder sobre um decreto que não está aqui precisa dizer qual
         dos dois casos é.
         """
-        arquivo = self.caminho.parent / "doerj" / "lacuna.json"
+        # O banco mora em `banco/` e a matéria-prima em `dados/` — discos
+        # diferentes, de propósito. Procurar a lacuna ao lado do .sqlite
+        # devolveria None e o servidor passaria a responder sem declarar o que
+        # falta: exatamente o silêncio bem-comportado que este acervo combate.
+        arquivo = self.caminho.parent.parent / "dados" / "doerj" / "lacuna.json"
+        if not arquivo.exists():
+            arquivo = self.caminho.parent / "doerj" / "lacuna.json"
         if not arquivo.exists():
             return None
         dados = json.loads(arquivo.read_text("utf-8"))
@@ -388,6 +394,16 @@ class Acervo:
                 f"Este decreto foi publicado mais de uma vez: {', '.join(republicacoes)} "
                 f"e {linha['publicado_em']}. Vale a última — a versão anterior "
                 "circulou com incorreção."
+            )
+        if "corpo_suspeito" in campos and linha["corpo_suspeito"]:
+            # O contrário do truncado, e igualmente importante: o texto pode
+            # trazer MAIS do que o ato. Quem pesquisa inteiro teor e cai aqui
+            # precisa saber que o trecho achado talvez não seja deste decreto.
+            avisos.append(
+                f"O texto deste registro é suspeito por excesso: "
+                f"{linha['corpo_suspeito']}. Um trecho encontrado aqui pode "
+                f"pertencer a outra matéria da mesma edição — confira no link "
+                f"antes de citar."
             )
         if "truncado" in campos and linha["truncado"]:
             avisos.append(

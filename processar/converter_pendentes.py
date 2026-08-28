@@ -28,7 +28,11 @@ def main() -> None:
         for pasta in pastas
         if pasta.exists()
         for p in sorted(pasta.glob("*.pdf"))
+        # `.txt.gz` conta como texto: uma passada de limpeza compacta os
+        # cadernos, e olhar só o `.txt` faria reconverter o que já está
+        # pronto — gastando tempo e deixando duas cópias do mesmo conteúdo.
         if not p.with_suffix(".txt").exists()
+        and not p.with_suffix(".txt.gz").exists()
     ]
     print(f"{len(pendentes)} PDFs sem texto")
     convertidos = falhos = 0

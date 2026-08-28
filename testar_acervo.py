@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from legis_rj.acervo import Acervo, interpretar_referencia
 
-BANCO = Path(__file__).resolve().parent / "dados" / "legis-rj.sqlite"
+BANCO = Path(__file__).resolve().parent / "banco" / "legis-rj.sqlite"
 
 
 def main() -> None:

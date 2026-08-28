@@ -17,7 +17,7 @@ from .acervo import ROTULOS, Acervo, interpretar_referencia, normalizar_especie
 BANCO = Path(
     os.environ.get(
         "LEGIS_RJ_BANCO",
-        Path(__file__).resolve().parent.parent / "dados" / "legis-rj.sqlite",
+        Path(__file__).resolve().parent.parent / "banco" / "legis-rj.sqlite",
     )
 )
 
