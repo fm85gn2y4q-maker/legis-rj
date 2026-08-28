@@ -38,6 +38,7 @@ from __future__ import annotations
 import json
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 from datetime import date, timedelta
@@ -53,13 +54,35 @@ import extrair_decretos  # noqa: E402
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 DOERJ = RAIZ / "dados" / "doerj"
 DATAS = DOERJ / "datas_dos_ausentes.json"
-CADERNOS = DOERJ / "cadernos"
+# ONDE O CADERNO É GRAVADO, E POR QUE NÃO É JUNTO DO ACERVO
+#
+# O acervo mora no HD externo, e o HD externo cai sob carga de escrita. Em
+# 25/08/2026 a recuperação estava em [60/222] com 45% de acerto quando o
+# Windows registrou 6.983 erros `disk` 51 e um `Ntfs` 55 — corrupção detectada
+# na estrutura do sistema de arquivos — e o processo morreu num `mkdir`.
+#
+# Então o caderno NOVO é gravado no disco interno, numa pasta irmã de `dados/`
+# (fora dela, para a rotina de arquivamento da máquina não a levar junto). A
+# LEITURA continua olhando os dois lugares: são 2.288 cadernos já baixados no
+# HD, e rebaixá-los seria gastar rede pelo que já se tem.
+CADERNOS_NO_ACERVO = DOERJ / "cadernos"
+CADERNOS = RAIZ / "cadernos"          # onde se grava
+CADERNOS_LEITURA = (CADERNOS, CADERNOS_NO_ACERVO)
 RESULTADO = DOERJ / "decretos_recuperados.jsonl"
 TENTADOS = DOERJ / "decretos_tentados.json"
+
+# O PDF baixado e a passagem do pdftotext acontecem NO DISCO INTERNO, nunca no
+# HD externo onde mora o acervo. Motivo medido, não precaução: em 24/08/2026 a
+# recuperação rodava escrevendo PDF, relendo e gravando texto em D:, e às
+# 13:48 o Windows registrou dezenas de `disk` ID 51 — erro de I/O em operação
+# de paginação — e matou o processo. Um caderno é dezenas de MB de PDF lido por
+# mapeamento de memória; o que precisa ficar no acervo é só o texto.
+TRABALHO = RAIZ / "trabalho"
 
 FOLGA = 3  # dias além do cerco: o ato sai publicado depois de assinado
 MATERIAS_POR_DIA = 4  # cadernos distintos que se tenta alcançar por dia
 JANELA_MAXIMA = 12  # além disso o cerco não ajuda e o custo explode
+CANDIDATOS_DA_BUSCA = 4  # edições que a busca aponta e que vale abrir
 
 # O campo de busca exige três caracteres: "de" é recusado e devolve zero, o que
 # se lê como "não há matéria naquele dia". Já custou uma coleta inteira — vinte
@@ -119,31 +142,139 @@ def janela_do_ausente(numero: int, conhecidas: dict[int, date]) -> list[str]:
 
 def texto_do_caderno(io: Ioerj, href: str, apelido: str) -> str | None:
     """Baixa o caderno daquela matéria e devolve o texto. O PDF não fica."""
-    CADERNOS.mkdir(exist_ok=True)
+    CADERNOS.mkdir(parents=True, exist_ok=True)
     txt = CADERNOS / f"{apelido}.txt"
-    if txt.exists():
-        return txt.read_text(encoding="utf-8", errors="replace")
+    for pasta in CADERNOS_LEITURA:
+        pronto = pasta / f"{apelido}.txt"
+        if pronto.exists():
+            return pronto.read_text(encoding="utf-8", errors="replace")
+    # NÃO se reaproveita "qualquer caderno daquele dia". Cheguei a fazer isso
+    # para cortar as 3,9 cópias idênticas por dia que havia em disco, e o
+    # resultado foi pior que o desperdício: o DOERJ parte o dia em cadernos, e
+    # devolver o caderno errado faz o extrator não achar nada e o decreto
+    # constar como inexistente. O 42.457 saiu em 11/05/2010 — dia que o cerco
+    # já visitava — e mesmo assim passou por ausente, porque o caderno aberto
+    # não era o dele. Melhor baixar de novo do que responder errado.
     # Já compactado por uma passada de limpeza: vale igual, e rebaixá-lo seria
     # gastar rede para obter o que está aqui.
-    comprimido = CADERNOS / f"{apelido}.txt.gz"
-    if comprimido.exists():
-        import gzip
+    for pasta in CADERNOS_LEITURA:
+        comprimido = pasta / f"{apelido}.txt.gz"
+        if comprimido.exists():
+            import gzip
 
-        with gzip.open(comprimido, "rt", encoding="utf-8", errors="replace") as f:
-            return f.read()
-    pdf = CADERNOS / f"{apelido}.pdf"
+            with gzip.open(comprimido, "rt", encoding="utf-8", errors="replace") as f:
+                return f.read()
+    TRABALHO.mkdir(exist_ok=True)
+    pdf = TRABALHO / f"{apelido}.pdf"
+    bruto = TRABALHO / f"{apelido}.txt"
     try:
         pdf.write_bytes(io.pdf_da_edicao(href))
         subprocess.run(
-            [PDFTOTEXT, "-enc", "UTF-8", str(pdf), str(txt)],
+            [PDFTOTEXT, "-enc", "UTF-8", str(pdf), str(bruto)],
             check=True, capture_output=True, timeout=900,
         )
+        if not bruto.exists():
+            return None
+        # Uma única escrita no acervo, e só depois de o texto estar pronto: se
+        # o disco cair no meio, cai sobre o rascunho, não sobre o caderno.
+        shutil.move(str(bruto), str(txt))
     except Exception:  # noqa: BLE001
         return None
     finally:
-        if pdf.exists():
-            pdf.unlink()
+        for lixo in (pdf, bruto):
+            if lixo.exists():
+                lixo.unlink()
     return txt.read_text(encoding="utf-8", errors="replace") if txt.exists() else None
+
+
+def materias_do_decreto(io: Ioerj, numero: str, referencia: str | None) -> list:
+    """As matérias que **são** o decreto, não as que o citam.
+
+    O CAMINHO CURTO, E POR QUE ELE VEM ANTES DE TUDO
+
+    Buscar só o número traz dinheiro junto: "42.457" casa com R$ 42.457,00 no
+    meio de um decreto orçamentário. Buscar "DECRETO 42.457" corta de 42 para
+    19 resultados, e ainda assim os 19 são Portaria e Despacho que citam o ato.
+
+    O que separa é o **tipo da matéria**, que a busca já devolve. Medido:
+
+        42.457   19 resultados ->  1 do tipo Decreto: 11/05/2010
+        42.472   12 resultados ->  3 do tipo Decreto: 26/05/2010 é a original
+        42.337    2 resultados ->  1 do tipo Decreto: 09/03/2010
+
+    E a matéria traz o próprio link de publicação, então se entra direto no
+    caderno em que o ato saiu — sem cercar dias, sem sortear páginas e sem
+    baixar a edição inteira quatro vezes.
+    """
+    try:
+        materias, _ = io.buscar(
+            f"DECRETO {numero_como_o_site_escreve(numero)}", jornal=PARTE_EXECUTIVO
+        )
+    except Exception:  # noqa: BLE001
+        return []
+    escolhidas = []
+    for m in materias:
+        if "decreto" not in m.tipo.lower() or not m.href_publicacao:
+            continue
+        try:
+            d, mes, ano = m.data.split("/")
+            iso = f"{ano}-{mes}-{d}"
+            date.fromisoformat(iso)
+        except Exception:  # noqa: BLE001
+            continue
+        if referencia and abs(int(ano) - date.fromisoformat(referencia).year) > 2:
+            continue
+        escolhidas.append((iso, m))
+    # Da mais antiga para a mais nova: a publicação original antecede a
+    # republicação, e é ela que o acervo quer como primeira resposta.
+    escolhidas.sort(key=lambda x: x[0])
+    return escolhidas[:CANDIDATOS_DA_BUSCA]
+
+
+def numero_como_o_site_escreve(numero: str) -> str:
+    """45592 -> "45.592" — é assim que o Diário imprime, e a busca é literal."""
+    return f"{numero[:-3]}.{numero[-3:]}" if len(numero) > 3 else numero
+
+
+def datas_pela_busca(io: Ioerj, numero: str, referencia: str | None) -> list[str]:
+    """Pergunta ao próprio DOERJ em que dias aquele número aparece.
+
+    O CERCO POR VIZINHOS ERRA, E ERRA SEMPRE PARA O MESMO LADO
+
+    O cerco supõe que numeração e publicação andam juntas. Medido em 2016, não
+    andam — o Estado assina e publica semanas depois:
+
+        45.592   cerco 07–10/03/2016   publicado em 28/03/2016
+        45.610   cerco 21–25/03/2016   publicado em 10/05/2016
+        45.727   cerco 28/07–04/08/16  publicado em 16/08/2016
+
+    Por isso o cerco rendeu zero em 30 tentativas nessa faixa. A busca do site
+    acha os três. O preço é que ela devolve também quem apenas **cita** o
+    número — 45.592 aparece numa edição de 2025 —, então a data serve para
+    abrir o caderno, e quem decide se o decreto está ali é o extrator.
+    """
+    try:
+        materias, _ = io.buscar(numero_como_o_site_escreve(numero), jornal=PARTE_EXECUTIVO)
+    except Exception:  # noqa: BLE001
+        return []
+    dias = []
+    for m in materias:
+        if not m.href_publicacao:
+            continue
+        try:
+            d, mes, ano = m.data.split("/")
+            iso = f"{ano}-{mes}-{d}"
+            date.fromisoformat(iso)
+        except Exception:  # noqa: BLE001
+            continue
+        dias.append(iso)
+    # Do mais antigo para o mais novo: a publicação original vem antes de
+    # qualquer citação posterior. E citação de anos adiante não se persegue.
+    dias = sorted(set(dias))
+    if referencia:
+        limite = date.fromisoformat(referencia).year
+        dias = [x for x in dias if abs(int(x[:4]) - limite) <= 2]
+    return dias[:CANDIDATOS_DA_BUSCA]
 
 
 def main() -> None:
@@ -156,6 +287,10 @@ def main() -> None:
     ausentes_restantes = {str(n) for n in ausentes}
     de_brinde: set[str] = set()
     pendentes = [str(n) for n in ausentes if str(n) not in tentados]
+    # Um número na linha de comando limita a rodada. Serve para medir o acerto
+    # de uma mudança de método numa amostra antes de gastar horas com ela.
+    if len(sys.argv) > 1 and sys.argv[1].isdigit():
+        pendentes = pendentes[: int(sys.argv[1])]
     print(f"recuperar: {len(pendentes)} de {len(ausentes)}")
     achados = 0
 
@@ -171,16 +306,60 @@ def main() -> None:
             # janela curta, e o cerco entra quando ela falta.
             citada = citacoes.get(numero, {}).get("data")
             if citada:
-                dias = [
+                cerco = [
                     (date.fromisoformat(citada) + timedelta(days=n)).isoformat()
                     for n in range(FOLGA + 1)
                 ]
             else:
-                dias = janela_do_ausente(int(numero), conhecidas)
-            registro = {"numero": numero, "janela": [dias[0], dias[-1]] if dias else []}
+                cerco = janela_do_ausente(int(numero), conhecidas)
+            # A busca do site vem primeiro porque acerta a data; o cerco fica
+            # de reserva, para quando a busca não devolver nada aproveitável.
+            referencia = citada or (cerco[0] if cerco else None)
+            apontados = datas_pela_busca(io, numero, referencia)
+            dias = apontados + [d for d in cerco if d not in apontados]
+            proprias = materias_do_decreto(io, numero, referencia)
+            registro = {
+                "numero": numero,
+                "janela": [cerco[0], cerco[-1]] if cerco else [],
+                "apontados_pela_busca": apontados,
+                "materias_proprias": [d for d, _ in proprias],
+            }
             encontrado = None
 
-            for dia in dias:
+            def colher(texto: str, dia: str, apelido: str, via: str) -> str | None:
+                """Guarda todo decreto ausente que este caderno traga.
+
+                Um caderno traz vários decretos. Guardar só o procurado joga
+                fora os vizinhos que também faltam — e eles quase sempre estão
+                ali, porque a numeração é cronológica e o caderno é de um
+                único dia. Aproveitar todos evita rebaixar o mesmo arquivo
+                mais adiante.
+                """
+                achou = None
+                for decreto in extrair_decretos.extrair_da_edicao(texto, dia):
+                    if decreto["numero"] not in ausentes_restantes:
+                        continue
+                    decreto["recuperado_de"] = apelido
+                    saida.write(json.dumps(decreto, ensure_ascii=False) + chr(10))
+                    ausentes_restantes.discard(decreto["numero"])
+                    de_brinde.add(decreto["numero"])
+                    if decreto["numero"] == numero:
+                        achou = apelido
+                        registro["via"] = via
+                return achou
+
+            # Caminho curto: a matéria que É o decreto traz o link do caderno
+            # em que ele saiu. Sem cerco, sem sorteio de página.
+            for dia, materia in proprias:
+                apelido = f"{dia}-m{materia.id}"
+                texto = texto_do_caderno(io, materia.href_publicacao, apelido)
+                if not texto:
+                    continue
+                encontrado = colher(texto, dia, apelido, "materia propria")
+                if encontrado:
+                    break
+
+            for dia in [] if encontrado else dias:
                 ano, mes, d = dia.split("-")
                 try:
                     materias = materias_do_dia(io, d, mes, ano)
@@ -197,22 +376,10 @@ def main() -> None:
                     texto = texto_do_caderno(io, materia.href_publicacao, apelido)
                     if not texto:
                         continue
-                    # Um caderno traz vários decretos. Guardar só o
-                    # procurado joga fora os vizinhos que também faltam — e
-                    # eles quase sempre estão ali, porque a numeração é
-                    # cronológica e o caderno é de um único dia. Aproveitar
-                    # todos evita rebaixar o mesmo arquivo mais adiante.
-                    for decreto in extrair_decretos.extrair_da_edicao(texto, dia):
-                        if decreto["numero"] not in ausentes_restantes:
-                            continue
-                        decreto["recuperado_de"] = apelido
-                        saida.write(json.dumps(decreto, ensure_ascii=False) + chr(10))
-                        ausentes_restantes.discard(decreto["numero"])
-                        de_brinde.add(decreto["numero"])
-                        if decreto["numero"] == numero:
-                            encontrado = apelido
+                    encontrado = colher(
+                        texto, dia, apelido, "busca" if dia in apontados else "cerco"
+                    )
                     if encontrado:
-                        break
                         break
                 if encontrado:
                     break

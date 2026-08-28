@@ -52,8 +52,14 @@ def main() -> None:
     do_calendario = sum(len(v) for v in por_numero.values())
     print(f"da varredura do calendário: {do_calendario}")
 
-    for pasta in ("extras", "cadernos"):
-        caminho = DOERJ / pasta
+    # `cadernos` fora de `dados/` é o disco interno: desde 25/08/2026 o caderno
+    # novo é gravado lá, porque o HD externo caía sob a escrita. As duas pastas
+    # valem igual e a consolidação precisa varrer as duas — deixar uma de fora
+    # não daria erro, só devolveria um acervo menor.
+    pastas = [("extras", DOERJ / "extras"),
+              ("cadernos", DOERJ / "cadernos"),
+              ("cadernos", RAIZ / "cadernos")]
+    for pasta, caminho in pastas:
         if not caminho.exists():
             continue
         antes = sum(len(v) for v in por_numero.values())
@@ -71,6 +77,24 @@ def main() -> None:
                 f.write(json.dumps(reg, ensure_ascii=False) + "\n")
 
     numeros = {int(n) for n in por_numero if n.isdigit() and int(n) < 60000}
+
+    # O TOPO DA SÉRIE NÃO PODE SER DECIDIDO POR UM REGISTRO SÓ
+    #
+    # A cobertura declarada é `fim - inicio` menos o que se tem, então um único
+    # número alto e falso inventa milhares de ausentes. Aconteceu: o Decreto
+    # 53.879 do **Prefeito** do Rio, citado dentro de um ato estadual, subiu o
+    # teto de 50.431 para 53.879 e a lacuna declarada foi de 4,9% para 32,1%.
+    # O extrator agora recusa ato de outra autoridade, mas o número seguinte a
+    # escapar não pode passar calado — daí a conferência aqui, que não descarta
+    # nada: só grita.
+    ordenados = sorted(numeros, reverse=True)
+    if len(ordenados) > 1 and ordenados[0] - ordenados[1] > 200:
+        print(
+            f"  !! ATENÇÃO: {ordenados[0]} está {ordenados[0] - ordenados[1]} "
+            f"acima do seguinte ({ordenados[1]}). Se for falso positivo, ele "
+            f"sozinho inventa {ordenados[0] - ordenados[1]} ausentes. Confira "
+            f"antes de acreditar na cobertura."
+        )
     inicio, fim = 42200, max(numeros)
     faltam = [n for n in range(inicio, fim + 1) if n not in numeros]
     FALTAM.write_text(json.dumps(faltam), encoding="utf-8")
