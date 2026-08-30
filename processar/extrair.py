@@ -69,7 +69,19 @@ def ano_de(bruto: str) -> tuple[str, bool]:
     saber que aquele ano não estava escrito.
     """
     if len(bruto) == 4:
-        return bruto, False
+        return (bruto if 1960 <= int(bruto) <= 2100 else None), False
+    # NEM TODO NUMERO DEPOIS DA BARRA E ANO
+    #
+    # "Resolução nº 99 / 100" existe na base, e o 100 nao e ano: e outra coisa
+    # que a ALERJ imprime no mesmo lugar. A inferencia de seculo pegava esse
+    # 100 e devolvia **19100** — que atravessou a extracao, o banco e a
+    # resposta do servidor, aparecendo na cobertura como "anos 19100-2026".
+    #
+    # A regra de dois digitos vale so para dois digitos. Qualquer outra coisa
+    # nao e ano nenhum, e inventar um e pior do que nao ter: a data da
+    # promulgacao, que vem em campo proprio, continua dizendo quando o ato e.
+    if len(bruto) != 2:
+        return None, False
     valor = int(bruto)
     return (f"19{valor:02d}" if valor >= 75 else f"20{valor:02d}"), True
 RE_DATA = re.compile(r"Data d[aeo]\s+\w+\s*(\d{1,2})/(\d{1,2})/(\d{4})", re.IGNORECASE)
@@ -139,9 +151,11 @@ def extrair(html: str, unid: str = "") -> dict:
     numero = RE_NUMERO.search(cabecalho)
     if numero:
         registro["numero"] = numero.group(1).replace(".", "")
-        registro["ano"], inferido = ano_de(numero.group(2))
-        if inferido:
-            registro["ano_inferido"] = True
+        ano, inferido = ano_de(numero.group(2))
+        if ano:
+            registro["ano"] = ano
+            if inferido:
+                registro["ano_inferido"] = True
 
     data = RE_DATA.search(cabecalho)
     if data:

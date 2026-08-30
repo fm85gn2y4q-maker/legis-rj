@@ -409,9 +409,6 @@ def main() -> None:
     print(f"banco trocado: {BANCO}")
 
 
-if __name__ == "__main__":
-    main()
-
 
 def _impressao_digital() -> dict:
     """O que o banco precisa refletir: documentos da ALERJ e registros de decreto.
@@ -463,3 +460,15 @@ def precisa_remontar() -> tuple[bool, dict, dict]:
     construido = json.loads(marca.read_text("utf-8"))
     igual = all(construido.get(k) == v for k, v in agora.items())
     return not igual, agora, construido
+
+
+# A entrada fica no FIM do arquivo, e nao no meio.
+#
+# Ela estava logo depois de `main()`, antes das funcoes que `main()` usa. Como
+# o modulo executa de cima para baixo, `main()` era chamada com
+# `registrar_construcao` ainda por definir — e o processo montava o banco
+# inteiro, trocava o arquivo e so entao morria com NameError, deixando a marca
+# por gravar. Custou uma montagem completa para aparecer, porque o erro estava
+# na ULTIMA linha do caminho feliz.
+if __name__ == "__main__":
+    main()
