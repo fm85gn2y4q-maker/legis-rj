@@ -312,6 +312,24 @@ def empacotar(python: str | None = None) -> int:
     (CONSTRUCAO / "dados").mkdir()
     shutil.copy2(BANCO, CONSTRUCAO / "dados" / "legis-rj.sqlite")
 
+    # A LACUNA VIAJA COM O BANCO, E NAO E DETALHE
+    #
+    # `cobertura_do_acervo` le `dados/doerj/lacuna.json` ao lado do SQLite. Sem
+    # o arquivo, a chave `lacuna_na_serie_de_decretos` vem `None` — e a
+    # extensao passa a responder como se nao houvesse lacuna nenhuma, quando ha
+    # 154 decretos ausentes na serie. Ninguem ve erro: o campo simplesmente
+    # esta vazio. Medido na primeira instalacao, e e o mesmo silencio que este
+    # acervo existe para nao produzir.
+    lacuna = RAIZ / "dados" / "doerj" / "lacuna.json"
+    if not lacuna.exists():
+        print(f"Lacuna nao encontrada em {lacuna}. Rode a consolidacao antes: "
+              f"sem ela a extensao nao declara o que falta.", file=sys.stderr)
+        return 1
+    destino_lacuna = CONSTRUCAO / "dados" / "doerj"
+    destino_lacuna.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(lacuna, destino_lacuna / "lacuna.json")
+    print(f"  lacuna declarada: {json.loads(lacuna.read_text('utf-8'))['ausentes']} ausentes")
+
     (CONSTRUCAO / "manifest.json").write_text(
         json.dumps(MANIFESTO, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
