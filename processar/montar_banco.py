@@ -113,6 +113,45 @@ CREATE VIRTUAL TABLE busca_ementa USING fts5(
 """
 
 
+# A LISTAGEM NEM SEMPRE TRAZ A COLUNA DE SITUACAO
+#
+# O normal e cinco colunas — numero, ano, situacao, ementa, autoria. Mas em 45
+# linhas a ALERJ manda quatro, sem a situacao, e a leitura por posicao fixa nao
+# percebe: o que entra no campo de situacao e a EMENTA, e no de ementa entra a
+# autoria. A linha inteira anda uma casa.
+#
+# Ninguem via erro. O ato respondia com "situacao: CRIA O MUNICIPIO DE ARMACAO
+# DOS BUZIOS, A SER DESMEMBRADO DO MUNICIPIO DE CABO FRIO" — texto que nao e
+# situacao nenhuma, mas preenche o campo e o faz parecer declarado.
+#
+# Por isso a coluna nao se le por posicao: le-se pelo CONTEUDO. A situacao vem
+# de um vocabulario fechado e curto; o que nao esta nele nao e situacao, e a
+# linha entao tem quatro colunas.
+SITUACOES_DECLARADAS = {
+    "Em Vigor",
+    "Revogado",
+    "Declarado Inconstitucional",
+    "Em Vigor com alterações",
+    "Suspenso",
+    "Declarado Parcialmente Inconstitucional",
+    "Trabalhando o texto",
+}
+
+
+def _colunas(col: list) -> dict:
+    """Situação, ementa e autoria — conforme a linha tenha ou não a situação."""
+    tem_situacao = len(col) > 2 and str(col[2]).strip() in SITUACOES_DECLARADAS
+    deslocamento = 0 if tem_situacao else -1
+    def pega(i: int) -> str:
+        j = i + deslocamento
+        return str(col[j]).strip() if 0 <= j < len(col) else ""
+    return {
+        "situacao": pega(2) if tem_situacao else "",
+        "ementa": pega(3),
+        "autoria": pega(4),
+    }
+
+
 def listagens() -> dict[str, dict]:
     """Ementa, autoria e situação como a ALERJ os mostra na lista de resultados."""
     mapa: dict[str, dict] = {}
@@ -124,9 +163,7 @@ def listagens() -> dict[str, dict]:
             reg = json.loads(linha)
             col = reg.get("colunas", [])
             mapa[reg["unid"]] = {
-                "situacao": col[2] if len(col) > 2 else "",
-                "ementa": col[3] if len(col) > 3 else "",
-                "autoria": col[4] if len(col) > 4 else "",
+                **_colunas(col),
                 "caminho": reg.get("caminho", ""),
             }
     situacoes = ALERJ / "situacao_especies.jsonl"

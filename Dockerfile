@@ -28,9 +28,9 @@ COPY legis_rj/ ./legis_rj/
 # novo e rodar `python preparar_release.py <versao>`, subir o asset e trocar
 # estas duas linhas.
 #
-# Gerado por `python preparar_release.py 1.0.0`: 34.138 atos, 201 -> 66 MB.
-ARG ACERVO=https://github.com/fm85gn2y4q-maker/legis-rj/releases/download/acervo-v1.0.0/legislacao-rj-v1.0.0.db.gz
-ARG ACERVO_SHA256=b70284dd4d98b37e79b14bf2f0633b1e56116823f75f2f07aa813d81e6a0fee7
+# Gerado por `python preparar_release.py 1.1.0`: 34.138 atos, 192 -> 65 MB.
+ARG ACERVO=https://github.com/fm85gn2y4q-maker/legis-rj/releases/download/acervo-v1.1.0/legislacao-rj-v1.1.0.db.gz
+ARG ACERVO_SHA256=a7870d437a53efb2cfe3789543f55925d4fa60c8bdd0dc0265c6ef9ceef86cb4
 COPY instalar_acervo.py ./
 RUN python instalar_acervo.py "$ACERVO" banco/legis-rj.sqlite "$ACERVO_SHA256"
 
